@@ -1,0 +1,12 @@
+tqdm
+
+numpy
+distfit
+scipy
+
+matplotlib
+plotly
+jupyter
+
+vmk_spectrum2
+vmk_spectrum2_wrapper
