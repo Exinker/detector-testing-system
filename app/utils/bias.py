@@ -2,12 +2,14 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from libspectrum2_wrapper.alias import Array
+from libspectrum2_wrapper.units import get_units_clipping
 
 from core.data import Data, to_array
+
 from .utils import calculate_stats
 
 
-def calculate_bias(data: Data, n: int, threshold: float | None = None, show: bool = False) -> float:
+def calculate_bias(data: Data, n: int, threshold: float = np.inf, show: bool = False) -> float:
     """Calculate a bias of the cell."""
     u, du, tau = to_array(data=data, n=n)
 
@@ -67,6 +69,9 @@ def calculate_bias(data: Data, n: int, threshold: float | None = None, show: boo
 def research_bias(data: Data, threshold: float | None = None, confidence: float = .95, show: bool = False) -> Array[float]:
     """Calculate a bias of the cells."""
     _, n_numbers = data.mean.shape
+
+    clipping_value = get_units_clipping(units=data.units)
+    threshold = threshold or clipping_value
 
     bias = np.zeros(n_numbers,)
     for n in range(n_numbers):
