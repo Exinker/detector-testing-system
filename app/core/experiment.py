@@ -127,8 +127,8 @@ def check_total(func: Callable) -> Callable:
     return wrapper
 
 
-def check_delay(func: Callable) -> Callable:
-    """Check a delay between exposure changes."""
+def check_exposure(func: Callable) -> Callable:
+    """Check an exposure."""
 
     def wrapper(device: Device, params: Sequence[tuple[int, Array[MilliSecond]]], *args, **kwargs):
         if CONFIG.check_exposure_flag is False:
@@ -149,7 +149,7 @@ def check_delay(func: Callable) -> Callable:
     return wrapper
 
 
-@check_delay
+@check_exposure
 @check_total
 @check_source
 def run_experiment(device: Device, params: Sequence[tuple[int, Sequence[MilliSecond]]], label: str| None = None, force: bool = False) -> None:
