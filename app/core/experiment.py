@@ -106,10 +106,10 @@ def check_total(func: Callable) -> Callable:
         total = 0
         for n_frames, exposure in params:
             total += (n_frames + 1) * np.sum(exposure)  # FIXME: +1 frame
-        total = total/1000
+        total = total/1e+6
 
         n_exposures = sum([len(exposure) for n_frames, exposure in params])
-        total += CONFIG.check_exposure_max * n_exposures
+        total += device._change_exposure_delay * n_exposures
 
         #
         while True:
