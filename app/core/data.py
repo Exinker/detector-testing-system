@@ -11,7 +11,7 @@ from libspectrum2_wrapper.alias import Array, MilliSecond
 from libspectrum2_wrapper.device import Device
 from libspectrum2_wrapper.units import Units, get_units_clipping, get_units_label
 
-from .config import DIRECTORY
+from config.config import DATA_DIRECTORY
 
 
 class Datum:
@@ -145,9 +145,9 @@ class Data:
         plt.show()
 
     def save(self) -> None:
-        """Save data to `<DIRECTORY>/<label>/data.pkl` file."""
+        """Save data to `<DATA_DIRECTORY>/<label>/data.pkl` file."""
 
-        filedir = os.path.join(DIRECTORY, self.label)
+        filedir = os.path.join(DATA_DIRECTORY, self.label)
         if not os.path.isdir(filedir):
             os.mkdir(filedir)
 
@@ -159,7 +159,7 @@ class Data:
     def load(cls, label: str) -> 'Data':
         """Load data from filepath."""
 
-        filedir = os.path.join(DIRECTORY, label)
+        filedir = os.path.join(DATA_DIRECTORY, label)
         filepath = os.path.join(filedir, 'data.pkl')
         with open(filepath, 'rb') as file:
             tmp = pickle.load(file)
@@ -215,7 +215,7 @@ def read_data(device: Device, exposure: Sequence[MilliSecond], n_frames: int, ve
 
 
 def load_data(label: str, show: bool = False) -> Data:
-    """Load data from `<DIRECTORY>/<label>/data.pkl` file."""
+    """Load data from `<DATA_DIRECTORY>/<label>/data.pkl` file."""
 
     # load
     data = Data.load(label=label)
