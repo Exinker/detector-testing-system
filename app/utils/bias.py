@@ -92,7 +92,7 @@ def research_bias(data: Data, threshold: float | None = None, confidence: float 
             c='black', s=2,
         )
         content = [
-            r'$\bar{{U}}_{{b}}$: {mean:.4f} $\pm$ {ci:.4f}'.format(
+            r'$U_{{b}}$: {mean:.4f} $\pm$ {ci:.4f}'.format(
                 mean=mean,
                 ci=ci,
             ),

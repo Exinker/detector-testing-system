@@ -9,8 +9,9 @@ import matplotlib.pyplot as plt
 from libspectrum2_wrapper.alias import Array, MilliSecond
 from libspectrum2_wrapper.device import Device
 
-from .config import DIRECTORY, EXPOSURE_MAX, EXPOSURE_MIN
-from .config import CHECK_SOURCE_FLAG, CHECK_SOURCE_TAU, CHECK_SOURCE_N_FRAMES, CHECK_TOTAL_FLAG, CHECK_EXPOSURE_FLAG
+from config import config as CONFIG
+from config.config import DATA_DIRECTORY
+
 from .data import Data, read_datum, read_data
 
 
@@ -18,20 +19,20 @@ def check_source(func: Callable) -> Callable:
     """Check a stability of the light source."""
 
     def wrapper(device: Device, *args, **kwargs):
-        if CHECK_SOURCE_FLAG is False:
+        if CONFIG.check_source_flag is False:
             return func(device, *args, **kwargs)
 
         #
         before = read_datum(
             device,
-            exposure=CHECK_SOURCE_TAU,
-            n_frames=CHECK_SOURCE_N_FRAMES,
+            exposure=CONFIG.check_source_tau,
+            n_frames=CONFIG.check_source_n_frames,
         )
         experiment = func(device, *args, **kwargs)
         after = read_datum(
             device,
-            exposure=CHECK_SOURCE_TAU,
-            n_frames=CHECK_SOURCE_N_FRAMES,
+            exposure=CONFIG.check_source_tau,
+            n_frames=CONFIG.check_source_n_frames,
         )
 
         duration = after.started_at - before.started_at
@@ -98,17 +99,18 @@ def check_total(func: Callable) -> Callable:
     """Check an estimation of experiment's total time."""
 
     def wrapper(device: Device, params: Sequence[tuple[int, Array[MilliSecond]]], *args, **kwargs):
-        if CHECK_TOTAL_FLAG is False:
+        if CONFIG.check_total_flag is False:
             return func(device, params, *args, **kwargs)
 
         # calculate total
         total = 0
         for n_frames, exposure in params:
             total += (n_frames + 1) * np.sum(exposure)  # FIXME: +1 frame
-        total = total/1000
 
         n_exposures = sum([len(exposure) for n_frames, exposure in params])
-        total += EXPOSURE_MAX * n_exposures
+        total += device._change_exposure_delay * n_exposures
+
+        total = total/1e+3
 
         #
         while True:
@@ -126,11 +128,11 @@ def check_total(func: Callable) -> Callable:
     return wrapper
 
 
-def check_delay(func: Callable) -> Callable:
-    """Check a delay between exposure changes."""
+def check_exposure(func: Callable) -> Callable:
+    """Check an exposure."""
 
     def wrapper(device: Device, params: Sequence[tuple[int, Array[MilliSecond]]], *args, **kwargs):
-        if CHECK_EXPOSURE_FLAG is False:
+        if CONFIG.check_exposure_flag is False:
             return func(device, params, *args, **kwargs)
 
         # calculate exposure_max
@@ -138,17 +140,17 @@ def check_delay(func: Callable) -> Callable:
         exposure_max = max([max(exposure) for _, exposure in params])
 
         #
-        if exposure_min < EXPOSURE_MIN:
-            raise ValueError('Check a min exposure or change `EXPOSURE_MIN`!')
-        if exposure_max > EXPOSURE_MAX:
-            raise ValueError('Check a max exposure or change `EXPOSURE_MAX`!')
+        if exposure_min < CONFIG.check_exposure_min:
+            raise ValueError('Check a min exposure or change `check_exposure_min`!')
+        if exposure_max > CONFIG.check_exposure_max:
+            raise ValueError('Check a max exposure or change `check_exposure_max`!')
 
         return func(device, params, *args, **kwargs)
 
     return wrapper
 
 
-@check_delay
+@check_exposure
 @check_total
 @check_source
 def run_experiment(device: Device, params: Sequence[tuple[int, Sequence[MilliSecond]]], label: str| None = None, force: bool = False) -> None:
@@ -158,7 +160,7 @@ def run_experiment(device: Device, params: Sequence[tuple[int, Sequence[MilliSec
         label = datetime.strftime(datetime.now(), '%Y%m%d-%H%M%S')
 
     # read or load data
-    filedir = os.path.join(DIRECTORY, label)
+    filedir = os.path.join(DATA_DIRECTORY, label)
     filepath = os.path.join(filedir, 'data.pkl')
     if force or not os.path.isfile(filepath):
 
