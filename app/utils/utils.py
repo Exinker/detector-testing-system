@@ -7,19 +7,24 @@ from libspectrum2_wrapper.alias import Array
 
 def calculate_stats(__values: Array[float], confidence: float = .99) -> tuple[float, float]:
     """Calculate mean and confidence interval."""
+    __values = __values[~np.isnan(__values)]
+
+    #
     n = len(__values)
 
     mean = np.mean(__values)
     se = stats.sem(__values)
     ci = se * stats.t.ppf((1 + confidence) / 2., n - 1)
 
+    #
     return mean, ci
 
 
 def treat_outliers(values: Array[float], coeff: float = 5) -> Array[float]:
     """Treat outliers by coeff."""
-    n_values = len(values)
+    values = values[~np.isnan(values)]
 
+    #
     mean = np.mean(values)
     interval = coeff * np.std(values, ddof=1)
 
@@ -27,7 +32,7 @@ def treat_outliers(values: Array[float], coeff: float = 5) -> Array[float]:
     return values[mask]
 
 
-def normalize_values(values: Array[float]) -> Array[float]:
+def normalize_valuess(values: Array[float]) -> Array[float]:
     """Normalize values."""
 
     mean = np.mean(values)
