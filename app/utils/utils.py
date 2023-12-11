@@ -32,7 +32,7 @@ def treat_outliers(values: Array[float], coeff: float = 5) -> Array[float]:
     return values[mask]
 
 
-def normalize_valuess(values: Array[float]) -> Array[float]:
+def normalize_values(values: Array[float]) -> Array[float]:
     """Normalize values."""
 
     mean = np.mean(values)
