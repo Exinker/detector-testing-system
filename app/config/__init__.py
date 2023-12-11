@@ -34,3 +34,9 @@ for folder in [INI_DIRECTORY, DATA_DIRECTORY, IMG_DIRECTORY]:
     filedir = os.path.join('.', folder)
     if not os.path.isdir(filedir):
         os.mkdir(filedir)
+
+
+for folder in [DATA_DIRECTORY, IMG_DIRECTORY]:
+    filedir = os.path.join('.', folder, config.device_id)
+    if not os.path.isdir(filedir):
+        os.mkdir(filedir)
