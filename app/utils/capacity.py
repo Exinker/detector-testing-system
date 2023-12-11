@@ -11,8 +11,8 @@ from .bias import calculate_bias
 from .utils import calculate_stats, normalize_values, treat_outliers
 
 
-def calculate_capacity(data: Data, n: int, threshold: float | None = None, verbose: bool = False, show: bool = False) -> tuple[float, float]:
-    """Calculate capacity and noise read."""
+def calculate_capacity(data: Data, n: int, threshold: float | None = None, verbose: bool = False, show: bool = False) -> float:
+    """Calculate capacity."""
     clipping_value = get_units_clipping(units=data.units)
     threshold = clipping_value if threshold is None else threshold
     u, du, tau = to_array(data=data, n=n)
@@ -24,10 +24,12 @@ def calculate_capacity(data: Data, n: int, threshold: float | None = None, verbo
     p = np.polyfit(u[mask], du[mask], deg=1)
     du_hat = np.polyval(p, u)
 
-    u_bias = calculate_bias(data=data, n=n)
+    u_bias = calculate_bias(
+        data=data, n=n,
+        threshold=threshold,
+    )
 
     capacity = clipping_value / p[0]
-    noise_read = np.sqrt(np.polyval(p, u_bias))
 
     #  verbose
     if verbose:
@@ -54,10 +56,6 @@ def calculate_capacity(data: Data, n: int, threshold: float | None = None, verbo
                 value=u_bias,
                 units=data.units_label,
             ),
-            r'$\sigma_{{rd}}$: {value:.4f} {units}'.format(
-                value=noise_read,
-                units=data.units_label,
-            ),
             r'$c$: {value:.0f} [$e^-$]'.format(
                 value=np.round(capacity, 0),
             ),
@@ -76,7 +74,7 @@ def calculate_capacity(data: Data, n: int, threshold: float | None = None, verbo
 
 
     #
-    return capacity, noise_read
+    return capacity
 
 
 def research_capacity(data: Data, threshold: float | None = None, show: bool = False) -> Array[float]:
@@ -87,9 +85,8 @@ def research_capacity(data: Data, threshold: float | None = None, show: bool = F
     threshold = threshold or clipping_value
 
     capacity = np.zeros(n_numbers,)
-    noise_read = np.zeros(n_numbers,)
     for n in range(n_numbers):
-        capacity[n], noise_read[n] = calculate_capacity(
+        capacity[n] = calculate_capacity(
             data=data,
             n=n,
             threshold=threshold,
