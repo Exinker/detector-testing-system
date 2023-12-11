@@ -29,7 +29,8 @@ def calculate_capacity(data: Data, n: int, threshold: float | None = None, verbo
         threshold=threshold,
     )
 
-    capacity = clipping_value / p[0]
+    angle = p[0]
+    capacity = np.nan if angle < 0 else clipping_value/angle
 
     #  verbose
     if verbose:
