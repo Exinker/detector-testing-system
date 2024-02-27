@@ -1,16 +1,15 @@
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 
-from libspectrum2_wrapper.alias import Array
-from libspectrum2_wrapper.units import get_units_clipping, get_units_label
+from vmk_spectrum2_wrapper.typing import Array
+from vmk_spectrum2_wrapper.units import get_units_clipping, get_units_label
 
-from core.data import Data, to_array
+from detector_testing_system.data import Data, to_array
+from detector_testing_system.utils import calculate_stats
 
-from .utils import calculate_stats
 
-
-def calculate_current(data: Data, n: int, threshold: float = np.inf, show: bool = False) -> float:
-    """Calculate a current of the cell."""
+def calculate_dark_current(data: Data, n: int, threshold: float = np.inf, show: bool = False) -> float:
+    """Calculate a dark current of the cell."""
     u, du, tau = to_array(data=data, n=n)
 
     # mask
@@ -24,7 +23,7 @@ def calculate_current(data: Data, n: int, threshold: float = np.inf, show: bool 
 
     # show
     if show:
-        fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(6, 4), tight_layout=True)
+        fig, ax = plt.subplots(figsize=(6, 4), tight_layout=True)
 
         plt.scatter(
             tau, u,
@@ -61,16 +60,16 @@ def calculate_current(data: Data, n: int, threshold: float = np.inf, show: bool 
     return current
 
 
-def research_current(data: Data, threshold: float | None = None, confidence: float = .95, show: bool = False) -> Array[float]:
-    """Calculate a current of the cells."""
+def research_dark_current(data: Data, threshold: float | None = None, confidence: float = .95, show: bool = False) -> Array[float]:
+    """Calculate a dark current of the cells."""
     _, n_numbers = data.mean.shape
 
     clipping_value = get_units_clipping(units=data.units)
     threshold = threshold or clipping_value
 
-    current = np.zeros(n_numbers,)
+    current = np.zeros(n_numbers)
     for n in range(n_numbers):
-        current[n] = calculate_current(
+        current[n] = calculate_dark_current(
             data=data, n=n,
             threshold=threshold,
         )
@@ -80,7 +79,7 @@ def research_current(data: Data, threshold: float | None = None, confidence: flo
         mean, ci = calculate_stats(current, confidence=confidence)
 
         #
-        fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(6, 4), tight_layout=True)
+        fig, ax = plt.subplots(figsize=(6, 4), tight_layout=True)
 
         plt.scatter(
             range(n_numbers), current,

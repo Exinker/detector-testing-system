@@ -6,9 +6,13 @@ __pycache__/
 
 env/
 build/
-ini/
-data/
-img/
+/ini/*
+/data/*
+/img/*
+
+/libspectrum2_wrapper/
+/core/
+/.data/
 
 *.whl
 *.ini

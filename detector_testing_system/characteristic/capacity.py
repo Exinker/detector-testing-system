@@ -1,18 +1,17 @@
-import numpy as np
-import matplotlib.pyplot as plt
 from distfit import distfit
+import matplotlib.pyplot as plt
+import numpy as np
 
-from libspectrum2_wrapper.alias import Array
-from libspectrum2_wrapper.units import get_units_clipping, to_electron
+from vmk_spectrum2_wrapper.typing import Array
+from vmk_spectrum2_wrapper.units import get_units_clipping
 
-from core.data import Data, to_array
+from detector_testing_system.characteristic.bias import calculate_bias
+from detector_testing_system.data import Data, to_array
+from detector_testing_system.utils import calculate_stats, normalize_values, treat_outliers
 
-from .bias import calculate_bias
-from .utils import calculate_stats, normalize_values, treat_outliers
 
-
-def calculate_read_noise(data: Data, n: int, threshold: float | None = None, verbose: bool = False, show: bool = False) -> float:
-    """Calculate noise read."""
+def calculate_capacity(data: Data, n: int, threshold: float | None = None, verbose: bool = False, show: bool = False) -> float:
+    """Calculate capacity."""
     clipping_value = get_units_clipping(units=data.units)
     threshold = clipping_value if threshold is None else threshold
     u, du, tau = to_array(data=data, n=n)
@@ -32,11 +31,13 @@ def calculate_read_noise(data: Data, n: int, threshold: float | None = None, ver
     angle = p[0]
     capacity = np.nan if angle < 0 else clipping_value/angle
 
-    read_noise = np.sqrt(np.polyval(p, u_bias))
+    #  verbose
+    if verbose:
+        print(f'capacity: {capacity:.0f}, e')
 
     # show
     if show:
-        fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(6, 4))
+        fig, ax = plt.subplots(figsize=(6, 4))
 
         plt.scatter(
             u, du,
@@ -55,13 +56,8 @@ def calculate_read_noise(data: Data, n: int, threshold: float | None = None, ver
                 value=u_bias,
                 units=data.units_label,
             ),
-            r'$\sigma_{{rd}}$: {value:.4f} {units}'.format(
-                value=to_electron(
-                    read_noise,
-                    units=data.units,
-                    capacity=capacity,
-                ),
-                units=r'$[e^{-}]$',
+            r'$c$: {value:.0f} [$e^-$]'.format(
+                value=np.round(capacity, 0),
             ),
         ]
         plt.text(
@@ -76,21 +72,20 @@ def calculate_read_noise(data: Data, n: int, threshold: float | None = None, ver
 
         plt.show()
 
-
     #
-    return read_noise
+    return capacity
 
 
-def research_read_noise(data: Data, threshold: float | None = None, show: bool = False) -> Array[float]:
-    """Research read_noise."""
+def research_capacity(data: Data, threshold: float | None = None, show: bool = False) -> Array[float]:
+    """Research capacity."""
     _, n_numbers = data.mean.shape
 
     clipping_value = get_units_clipping(units=data.units)
     threshold = threshold or clipping_value
 
-    read_noise = np.zeros(n_numbers,)
+    capacity = np.zeros(n_numbers)
     for n in range(n_numbers):
-        read_noise[n] = calculate_read_noise(
+        capacity[n] = calculate_capacity(
             data=data,
             n=n,
             threshold=threshold,
@@ -98,14 +93,14 @@ def research_read_noise(data: Data, threshold: float | None = None, show: bool =
 
     # show
     if show:
-        mean, ci = calculate_stats(read_noise)
+        mean, ci = calculate_stats(capacity)
 
         #
         fig, (ax_left, ax_right) = plt.subplots(nrows=1, ncols=2, figsize=(12, 4))
 
         plt.sca(ax_left)
         plt.scatter(
-            range(n_numbers), read_noise,
+            range(n_numbers), capacity,
             c='black', s=2,
         )
         plt.axhline(
@@ -113,13 +108,13 @@ def research_read_noise(data: Data, threshold: float | None = None, show: bool =
             color='red', linestyle='-', linewidth=2,
         )
         plt.xlabel(r'$number$')
-        plt.ylabel(r'read-noise {units}'.format(units=data.units_label))
+        plt.ylabel(r'capacity [$e^-$]')
         plt.grid(color='grey', linestyle=':')
         # plt.legend()
 
         plt.sca(ax_right)
         content = [
-            fr'$\hat{{c}}: {mean:.4f} \pm {ci:.4f}$',
+            fr'$\hat{{c}}: {np.round(mean, 0):.0f} \pm {np.round(ci, 0):.0f}$',
         ]
         plt.text(
             0.05/2, 0.95,
@@ -128,13 +123,13 @@ def research_read_noise(data: Data, threshold: float | None = None, show: bool =
             ha='left', va='top',
         )
         plt.hist(
-            read_noise,
+            capacity,
             bins=40,
             edgecolor='black', facecolor='white',
             # fill=False,
         )
 
-        plt.xlabel(r'read-noise {units}'.format(units=data.units_label))
+        plt.xlabel(r'capacity [$e^-$]')
         plt.ylabel(r'freq')
         plt.grid(color='grey', linestyle=':')
         # plt.legend()
@@ -143,7 +138,7 @@ def research_read_noise(data: Data, threshold: float | None = None, show: bool =
 
     # show distribution
     if show:
-        values = read_noise.copy()
+        values = capacity.copy()
         values = treat_outliers(values)
         values = normalize_values(values)
 
@@ -170,32 +165,4 @@ def research_read_noise(data: Data, threshold: float | None = None, show: bool =
         )
 
     #
-    return read_noise
-
-
-def compare_noise(read_noise: Array[float], data: Data) -> None:
-    """"""
-    _, n_numbers = data.mean.shape
-
-    noise = np.mean(np.sqrt(data.variance), axis=0)
-
-    #
-    fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(6, 4))
-
-    # plt.scatter(
-    #     range(n_numbers), read_noise,
-    #     c='black', s=2,
-    # )
-    plt.axhline(
-        np.mean(read_noise),
-        color='black', linestyle=':',
-    )
-    plt.scatter(
-        range(n_numbers), noise,
-        c='red', s=2,
-    )
-    plt.xlabel(r'$number$')
-    plt.ylabel(r'noise-read {units}'.format(units=data.units_label))
-    plt.grid(color='grey', linestyle=':')
-
-    plt.show()
+    return capacity

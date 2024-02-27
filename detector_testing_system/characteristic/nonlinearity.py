@@ -1,12 +1,12 @@
 import os
 from collections.abc import Sequence
 
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 
-from libspectrum2_wrapper.alias import Array, MilliSecond
+from vmk_spectrum2_wrapper.typing import Array, MilliSecond
 
-from core.data import Data, load_data, to_array
+from detector_testing_system.data import Data, load_data, to_array
 
 
 def _calculate_xi(tau: Array[float], u: Array[float], p: Array[float]) -> Array[float]:
@@ -147,7 +147,7 @@ def research_nonlinearity(data: Data, show: bool = False) -> Array[float]:
 
     _, n_numbers = data.mean.shape
 
-    alpha = np.zeros(n_numbers,)
+    alpha = np.zeros(n_numbers)
     for n in range(n_numbers):
         _, alpha[n] = calculate_nonlinearity(
             data=data,
@@ -156,7 +156,7 @@ def research_nonlinearity(data: Data, show: bool = False) -> Array[float]:
 
     # show
     if show:
-        fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(6, 4))
+        fig, ax = plt.subplots(figsize=(6, 4))
 
         content = [
             fr'{data.label}',

@@ -1,12 +1,11 @@
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 
-from libspectrum2_wrapper.alias import Array
-from libspectrum2_wrapper.units import get_units_clipping
+from vmk_spectrum2_wrapper.typing import Array
+from vmk_spectrum2_wrapper.units import get_units_clipping
 
-from core.data import Data, to_array
-
-from .utils import calculate_stats
+from detector_testing_system.data import Data, to_array
+from detector_testing_system.utils import calculate_stats
 
 
 def calculate_bias(data: Data, n: int, threshold: float = np.inf, show: bool = False) -> float:
@@ -24,7 +23,7 @@ def calculate_bias(data: Data, n: int, threshold: float = np.inf, show: bool = F
 
     # show
     if show:
-        fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(6, 4), tight_layout=True)
+        fig, ax = plt.subplots(figsize=(6, 4), tight_layout=True)
 
         plt.scatter(
             tau, u,
@@ -73,7 +72,7 @@ def research_bias(data: Data, threshold: float | None = None, confidence: float 
     clipping_value = get_units_clipping(units=data.units)
     threshold = threshold or clipping_value
 
-    bias = np.zeros(n_numbers,)
+    bias = np.zeros(n_numbers)
     for n in range(n_numbers):
         bias[n] = calculate_bias(
             data=data, n=n,
@@ -85,7 +84,7 @@ def research_bias(data: Data, threshold: float | None = None, confidence: float 
         mean, ci = calculate_stats(bias, confidence=confidence)
 
         #
-        fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(6, 4), tight_layout=True)
+        fig, ax = plt.subplots(figsize=(6, 4), tight_layout=True)
 
         plt.scatter(
             range(n_numbers), bias,

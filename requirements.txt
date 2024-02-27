@@ -1,12 +1,11 @@
 tqdm
 
+matplotlib
 numpy
 distfit
 scipy
 
-matplotlib
-plotly
 jupyter
 
-vmk_spectrum2-0.0.5-cp310-cp310-win_amd64.whl
-git+https://github.com/Exinker/vmk_spectrum2_wrapper@develop
+# vmk_spectrum2-0.0.5-cp310-cp310-win_amd64.whl
+vmk_spectrum2_wrapper @ git+https://github.com/Exinker/vmk_spectrum2_wrapper

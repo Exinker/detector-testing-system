@@ -1,11 +1,11 @@
 import os
 
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 
-from libspectrum2_wrapper.alias import Array
+from vmk_spectrum2_wrapper.typing import Array
 
-from core.data import Data, to_array
+from detector_testing_system.data import Data, to_array
 
 
 def calculate_gradient(data: Data, n: int, show: bool = False, xlim: tuple[float, float] = None, ylim: tuple[float, float] = None) -> Array[float]:

@@ -3,36 +3,34 @@ from collections.abc import Sequence
 from datetime import datetime
 from typing import Callable
 
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 
-from libspectrum2_wrapper.alias import Array, MilliSecond
-from libspectrum2_wrapper.device import Device
+from vmk_spectrum2_wrapper.typing import Array, MilliSecond
+from vmk_spectrum2_wrapper.device import Device
 
-from config import config as CONFIG
-from config.config import DATA_DIRECTORY
-
-from .data import Data, read_datum, read_data
+from detector_testing_system.data import Data, read_datum, read_data
+from detector_testing_system.experiment.config import ExperimentConfig
 
 
 def check_source(func: Callable) -> Callable:
     """Check a stability of the light source."""
 
-    def wrapper(device: Device, *args, **kwargs):
-        if CONFIG.check_source_flag is False:
-            return func(device, *args, **kwargs)
+    def wrapper(device: Device, config: ExperimentConfig, *args, **kwargs):
+        if config.check_source_flag is False:
+            return func(device, config, *args, **kwargs)
 
         #
         before = read_datum(
             device,
-            exposure=CONFIG.check_source_tau,
-            n_frames=CONFIG.check_source_n_frames,
+            exposure=config.check_source_tau,
+            n_frames=config.check_source_n_frames,
         )
-        experiment = func(device, *args, **kwargs)
+        experiment = func(device, config, *args, **kwargs)
         after = read_datum(
             device,
-            exposure=CONFIG.check_source_tau,
-            n_frames=CONFIG.check_source_n_frames,
+            exposure=config.check_source_tau,
+            n_frames=config.check_source_n_frames,
         )
 
         duration = after.started_at - before.started_at
@@ -98,9 +96,9 @@ def check_source(func: Callable) -> Callable:
 def check_total(func: Callable) -> Callable:
     """Check an estimation of experiment's total time."""
 
-    def wrapper(device: Device, params: Sequence[tuple[int, Array[MilliSecond]]], *args, **kwargs):
-        if CONFIG.check_total_flag is False:
-            return func(device, params, *args, **kwargs)
+    def wrapper(device: Device, config: ExperimentConfig, params: Sequence[tuple[int, Array[MilliSecond]]], *args, **kwargs):
+        if config.check_total_flag is False:
+            return func(device, config, params, *args, **kwargs)
 
         # calculate total
         total = 0
@@ -119,7 +117,7 @@ def check_total(func: Callable) -> Callable:
             ))
             match answer:
                 case 'Y' | 'y' | '':
-                    return func(device, params, *args, **kwargs)
+                    return func(device, config, params, *args, **kwargs)
                 case 'N' | 'n':
                     return None
                 case _:
@@ -131,21 +129,21 @@ def check_total(func: Callable) -> Callable:
 def check_exposure(func: Callable) -> Callable:
     """Check an exposure."""
 
-    def wrapper(device: Device, params: Sequence[tuple[int, Array[MilliSecond]]], *args, **kwargs):
-        if CONFIG.check_exposure_flag is False:
-            return func(device, params, *args, **kwargs)
+    def wrapper(device: Device, config: ExperimentConfig, params: Sequence[tuple[int, Array[MilliSecond]]], *args, **kwargs):
+        if config.check_exposure_flag is False:
+            return func(device, config, params, *args, **kwargs)
 
         # calculate exposure_max
         exposure_min = min([min(exposure) for _, exposure in params])
         exposure_max = max([max(exposure) for _, exposure in params])
 
         #
-        if exposure_min < CONFIG.check_exposure_min:
+        if exposure_min < config.check_exposure_min:
             raise ValueError('Check a min exposure or change `check_exposure_min`!')
-        if exposure_max > CONFIG.check_exposure_max:
+        if exposure_max > config.check_exposure_max:
             raise ValueError('Check a max exposure or change `check_exposure_max`!')
 
-        return func(device, params, *args, **kwargs)
+        return func(device, config, params, *args, **kwargs)
 
     return wrapper
 
@@ -153,26 +151,26 @@ def check_exposure(func: Callable) -> Callable:
 @check_exposure
 @check_total
 @check_source
-def run_experiment(device: Device, params: Sequence[tuple[int, Sequence[MilliSecond]]], label: str| None = None, force: bool = False) -> None:
+def run_experiment(device: Device, config: ExperimentConfig, params: Sequence[tuple[int, Sequence[MilliSecond]]], label: str | None = None, force: bool = False) -> None:
     """Run experiment with given params"""
 
     if label is None:
         label = datetime.strftime(datetime.now(), '%Y%m%d-%H%M%S')
 
     # read or load data
-    filedir = os.path.join(DATA_DIRECTORY, label)
+    filedir = os.path.join('.', 'data', label)
     filepath = os.path.join(filedir, 'data.pkl')
     if force or not os.path.isfile(filepath):
 
         # read
         data = Data([], units=device.storage.units, label=label)
         for n_frames, exposure in params:
-            tmp = read_data(
+            spam = read_data(
                 device,
                 exposure=exposure,
                 n_frames=n_frames,
             )
-            data.add(tmp.data)
+            data.add(spam.data)
 
         # save
         data.save()

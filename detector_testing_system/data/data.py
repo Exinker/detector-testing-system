@@ -3,15 +3,13 @@ import pickle
 from collections.abc import Sequence
 from time import time
 
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 from tqdm.notebook import tqdm
 
-from libspectrum2_wrapper.alias import Array, MilliSecond
-from libspectrum2_wrapper.device import Device
-from libspectrum2_wrapper.units import Units, get_units_clipping, get_units_label
-
-from config.config import DATA_DIRECTORY
+from vmk_spectrum2_wrapper.device import Device
+from vmk_spectrum2_wrapper.typing import Array, MilliSecond
+from vmk_spectrum2_wrapper.units import Units, get_units_label
 
 
 class Datum:
@@ -48,9 +46,10 @@ class Datum:
     def units_label(self) -> str:
         return get_units_label(self.units)
 
+    # --------        handlers        --------
     def show(self) -> None:
 
-        fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(6, 4), tight_layout=True)
+        fig, ax = plt.subplots(figsize=(6, 4), tight_layout=True)
 
         plt.plot(
             self.mean,
@@ -65,7 +64,7 @@ class Datum:
 
         plt.show()
 
-
+    # --------        private        --------
     def __str__(self) -> str:
         cls = self.__class__
         return f'{cls.__name__}({self.label})'
@@ -118,10 +117,11 @@ class Data:
     def add(self, __data: Sequence[Datum]):
         self.data.extend(__data)
 
+    # --------        handlers        --------
     def show(self, legend: bool = False, save: bool = False) -> None:
         """Show data."""
 
-        fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(6, 4), tight_layout=True)
+        fig, ax = plt.subplots(figsize=(6, 4), tight_layout=True)
 
         plt.plot(
             self.mean.T,
@@ -145,9 +145,9 @@ class Data:
         plt.show()
 
     def save(self) -> None:
-        """Save data to `<DATA_DIRECTORY>/<label>/data.pkl` file."""
+        """Save data to `./data//<label>/data.pkl` file."""
 
-        filedir = os.path.join(DATA_DIRECTORY, self.label)
+        filedir = os.path.join('.', 'data', self.label)
         if not os.path.isdir(filedir):
             os.mkdir(filedir)
 
@@ -159,7 +159,7 @@ class Data:
     def load(cls, label: str) -> 'Data':
         """Load data from filepath."""
 
-        filedir = os.path.join(DATA_DIRECTORY, label)
+        filedir = os.path.join('.', 'data', label)
         filepath = os.path.join(filedir, 'data.pkl')
         with open(filepath, 'rb') as file:
             tmp = pickle.load(file)
@@ -171,6 +171,7 @@ class Data:
             label=tmp.label if hasattr(tmp, 'label') else label,
         )
 
+    # --------        private        --------
     def __getitem__(self, index: int) -> Datum:
         return self.data[index]
 
@@ -179,6 +180,7 @@ class Data:
         return f'{cls.__name__}({self.label})'
 
 
+# --------        handlers        --------
 def read_datum(device: Device, exposure: MilliSecond, n_frames: int) -> Datum:
     """Read datum with a given `tau` and `n_frames`."""
 
@@ -208,6 +210,7 @@ def read_data(device: Device, exposure: Sequence[MilliSecond], n_frames: int, ve
 
         data.append(datum)
 
+    #
     return Data(
         data,
         units=device.storage.units,
@@ -215,9 +218,8 @@ def read_data(device: Device, exposure: Sequence[MilliSecond], n_frames: int, ve
 
 
 def load_data(label: str, show: bool = False) -> Data:
-    """Load data from `<DATA_DIRECTORY>/<label>/data.pkl` file."""
+    """Load data from `./data//<label>/data.pkl` file."""
 
-    # load
     data = Data.load(label=label)
 
     # show
@@ -226,14 +228,3 @@ def load_data(label: str, show: bool = False) -> Data:
 
     #
     return data
-
-
-def to_array(data: Data, n: int, threshold: float | None = None) -> tuple[Array[float], Array[float], Array[float]]:
-    """Convert data to array."""
-    u = data.mean[:,n]
-    du = data.variance[:,n]
-
-    threshold = get_units_clipping(units=data.units) if threshold is None else threshold
-    cond = u < threshold
-
-    return u[cond], du[cond], data.exposure[cond]
