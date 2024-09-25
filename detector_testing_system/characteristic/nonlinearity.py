@@ -1,5 +1,6 @@
 import os
 from collections.abc import Sequence
+import reprlib
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -42,7 +43,7 @@ def _optimize(tau: Array[float], u: Array[float]) -> Array[float]:
 
 def calculate_nonlinearity(data: Data, n: int, span: tuple[MilliSecond, MilliSecond] = None, show: bool = False, xlim: tuple[float, float] = None, ylim: tuple[float, float] = None) -> tuple[Array[float], float]:
     """"""
-    u, ud, tau = to_array(data=data, n=n)
+    u, du, tau = to_array(data=data, n=n)
 
     # mask
     if span is None:
@@ -103,7 +104,7 @@ def calculate_nonlinearity(data: Data, n: int, span: tuple[MilliSecond, MilliSec
             label=r'$U$',
         )
         content = [
-            fr'{data.label}',
+            fr'{str(reprlib.repr(data.label))}',
             fr'n: {n}',
             fr'$\alpha: {{{alpha:.2f}}}$ [%]',
         ]
@@ -190,7 +191,7 @@ def compare_nonlinearity(labels: Sequence[str], n: int, xlim: tuple[float, float
             label=label,
         )
 
-        u, ud, tau = to_array(data=data, n=n)
+        u, du, tau = to_array(data=data, n=n)
         xi, alpha = calculate_nonlinearity(
             data=data,
             n=n,

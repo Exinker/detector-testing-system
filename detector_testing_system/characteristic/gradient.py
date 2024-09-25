@@ -9,8 +9,8 @@ from detector_testing_system.data import Data, to_array
 
 
 def calculate_gradient(data: Data, n: int, show: bool = False, xlim: tuple[float, float] = None, ylim: tuple[float, float] = None) -> Array[float]:
-    """Сalculate gradient."""
-    u, ud, tau = to_array(data=data, n=n)
+    """Calculate gradient."""
+    u, du, tau = to_array(data=data, n=n)
     u_grad = np.gradient(u, tau)
 
     # show
