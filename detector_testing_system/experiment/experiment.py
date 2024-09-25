@@ -165,12 +165,12 @@ def run_experiment(device: Device, config: ExperimentConfig, params: Sequence[tu
         # read
         data = Data([], units=device.storage.units, label=label)
         for n_frames, exposure in params:
-            spam = read_data(
+            tmp = read_data(
                 device,
                 exposure=exposure,
                 n_frames=n_frames,
             )
-            data.add(spam.data)
+            data.add(tmp.data)
 
         # save
         data.save()

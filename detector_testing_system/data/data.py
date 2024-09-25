@@ -2,6 +2,7 @@ import os
 import pickle
 from collections.abc import Sequence
 from time import time
+from typing import Any, Mapping, Self
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -46,7 +47,6 @@ class Datum:
     def units_label(self) -> str:
         return get_units_label(self.units)
 
-    # --------        handlers        --------
     def show(self) -> None:
 
         fig, ax = plt.subplots(figsize=(6, 4), tight_layout=True)
@@ -64,7 +64,14 @@ class Datum:
 
         plt.show()
 
-    # --------        private        --------
+    def dump(self) -> Mapping[str, Any]:
+        return {
+            'intensity': pickle.dumps(self.intensity),
+            'exposure': pickle.dumps(self.exposure),
+            'n_frames': self.n_frames,
+            'started_at': self.started_at,
+        }
+
     def __str__(self) -> str:
         cls = self.__class__
         return f'{cls.__name__}({self.label})'
@@ -117,7 +124,6 @@ class Data:
     def add(self, __data: Sequence[Datum]):
         self.data.extend(__data)
 
-    # --------        handlers        --------
     def show(self, legend: bool = False, save: bool = False) -> None:
         """Show data."""
 
@@ -144,6 +150,13 @@ class Data:
 
         plt.show()
 
+    def dump(self) -> Mapping[str, Any]:
+        return {
+            'data': tuple([datum.dump() for datum in self.data]),
+            'units': str(self.units),
+            'label': str(self.label),
+        }
+
     def save(self) -> None:
         """Save data to `./data//<label>/data.pkl` file."""
 
@@ -153,25 +166,39 @@ class Data:
 
         filepath = os.path.join(filedir, 'data.pkl')
         with open(filepath, 'wb') as file:
-            pickle.dump(self, file)
+            pickle.dump(self.dump(), file)
 
     @classmethod
-    def load(cls, label: str) -> 'Data':
+    def load(cls, label: str) -> Self:
         """Load data from filepath."""
 
         filedir = os.path.join('.', 'data', label)
         filepath = os.path.join(filedir, 'data.pkl')
         with open(filepath, 'rb') as file:
-            tmp = pickle.load(file)
+            data_serilized = pickle.load(file)
 
-        #
-        return Data(
-            tmp.data,
-            units=tmp.units if hasattr(tmp, 'units') else Units.percent,
-            label=tmp.label if hasattr(tmp, 'label') else label,
+        units = {
+            'Units.digit': Units.digit,
+            'Units.percent': Units.percent,
+            'Units.electron': Units.electron,
+        }.get(data_serilized.get('units'), Units.percent)
+        data = Data(
+            [
+                Datum(
+                    intensity=pickle.loads(datum_serilized.get('intensity')),
+                    exposure=pickle.loads(datum_serilized.get('exposure')),
+                    n_frames=datum_serilized.get('n_frames'),
+                    started_at=datum_serilized.get('started_at'),
+                    units=units,
+                )
+                for datum_serilized in data_serilized.get('data', [])
+            ],
+            units=units,
+            label=data_serilized.get('label', label),
         )
 
-    # --------        private        --------
+        return data
+
     def __getitem__(self, index: int) -> Datum:
         return self.data[index]
 
@@ -188,12 +215,12 @@ def read_datum(device: Device, exposure: MilliSecond, n_frames: int) -> Datum:
 
     started_at = time()
     intensity = device.await_read(
-        n_frames=n_frames+1,  # FIXME: +1 frame
+        n_frames=n_frames+1,  # записать один лишний кадр (нередко первый кадр приходит с старым временем экспозиции из-за ошибки в устройстве)
     )
     intensity = intensity.reshape(intensity.shape[0], intensity.shape[2])
 
     return Datum(
-        intensity=intensity[1:],  # FIXME: +1 frame
+        intensity=intensity[1:],  # выкинуть первый кадр (лишний)
         exposure=exposure,
         n_frames=n_frames,
         started_at=started_at,
