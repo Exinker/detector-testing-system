@@ -42,8 +42,8 @@ def _optimize(tau: Array[float], u: Array[float]) -> Array[float]:
 
 
 def calculate_nonlinearity(data: Data, n: int, span: tuple[MilliSecond, MilliSecond] = None, show: bool = False, xlim: tuple[float, float] = None, ylim: tuple[float, float] = None) -> tuple[Array[float], float]:
-    """"""
-    u, du, tau = to_array(data=data, n=n)
+
+    u, variance, tau = to_array(data=data, n=n)
 
     # mask
     if span is None:
@@ -191,7 +191,7 @@ def compare_nonlinearity(labels: Sequence[str], n: int, xlim: tuple[float, float
             label=label,
         )
 
-        u, du, tau = to_array(data=data, n=n)
+        u, variance, tau = to_array(data=data, n=n)
         xi, alpha = calculate_nonlinearity(
             data=data,
             n=n,

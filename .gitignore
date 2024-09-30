@@ -1,3 +1,4 @@
+.DS_Store
 .git/
 __pycache__/
 .ipynb_checkpoints/
@@ -5,15 +6,8 @@ __pycache__/
 .pytest_cache/
 *.egg-info/
 
-env/
 build/
-/ini/*
-/data/*
-/img/*
-
-/libspectrum2_wrapper/
-/core/
-/.data/
+env/
 
 *.whl
 *.ini
@@ -22,3 +16,10 @@ build/
 .*.py
 .*.ipynb
 .*.json
+
+.data/
+.TODO
+core/
+data/
+img/
+ini/

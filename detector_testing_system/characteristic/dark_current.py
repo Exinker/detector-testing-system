@@ -10,7 +10,7 @@ from detector_testing_system.utils import calculate_stats
 
 def calculate_dark_current(data: Data, n: int, threshold: float = np.inf, show: bool = False) -> float:
     """Calculate a dark current of the cell."""
-    u, du, tau = to_array(data=data, n=n)
+    u, variance, tau = to_array(data=data, n=n)
 
     # mask
     mask = u < threshold
