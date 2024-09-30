@@ -1,6 +1,7 @@
 import os
-import pickle
 from collections.abc import Sequence
+import pickle
+import reprlib
 from time import time
 from typing import Any, Mapping, Self
 
@@ -46,6 +47,14 @@ class Datum:
     @property
     def units_label(self) -> str:
         return get_units_label(self.units)
+
+    @property
+    def n_times(self) -> int:
+        return self.intensity.shape[0]
+
+    @property
+    def n_numbers(self) -> int:
+        return self.intensity.shape[1]
 
     def show(self) -> None:
 
@@ -121,7 +130,23 @@ class Data:
     def units_label(self) -> str:
         return get_units_label(self.units)
 
+    @property
+    def n_times(self) -> int:
+        if not self.data:
+            return 0
+
+        return self.data[0].n_times
+
+    @property
+    def n_numbers(self) -> int:
+        if not self.data:
+            return 0
+
+        return self.data[0].n_numbers
+
     def add(self, __data: Sequence[Datum]):
+        # TODO: check input data shape!
+
         self.data.extend(__data)
 
     def show(self, legend: bool = False, save: bool = False) -> None:
@@ -131,7 +156,17 @@ class Data:
 
         plt.plot(
             self.mean.T,
-            label=[datum.label for datum in self.data],
+            label=[reprlib.repr(datum.label) for datum in self.data],
+        )
+
+        content = '\n'.join([
+            fr'{str(reprlib.repr(self.label))}',
+        ])
+        ax.text(
+            0.95, 0.95,
+            content,
+            transform=ax.transAxes,
+            ha='right', va='top',
         )
 
         plt.xlabel(r'$number$')
@@ -251,7 +286,7 @@ def load_data(label: str, show: bool = False) -> Data:
 
     # show
     if show:
-        data.show(legend=False)
+        data.show()
 
     #
     return data
