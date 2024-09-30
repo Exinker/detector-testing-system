@@ -7,5 +7,5 @@ scipy
 
 jupyter
 
-# vmk_spectrum2-0.0.5-cp310-cp310-win_amd64.whl
-vmk_spectrum2_wrapper @ git+https://github.com/Exinker/vmk_spectrum2_wrapper
+# vmk_spectrum3-0.2.0-cp310-cp310-win_amd64.whl
+vmk_spectrum3_wrapper @ git+https://github.com/Exinker/vmk_spectrum3_wrapper
