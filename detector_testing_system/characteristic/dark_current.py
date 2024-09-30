@@ -1,8 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
-from vmk_spectrum2_wrapper.typing import Array
-from vmk_spectrum2_wrapper.units import get_units_clipping, get_units_label
+from vmk_spectrum3_wrapper.typing import Array
 
 from detector_testing_system.data import Data, to_array
 from detector_testing_system.utils import calculate_stats
@@ -41,7 +40,7 @@ def calculate_dark_current(data: Data, n: int, threshold: float = np.inf, show: 
             r'$n$: {n:.0f}'.format(n=n),
             r'$i$: {value:.4f} {units}'.format(
                 value=current,
-                units=f'[{get_units_label(data.units, is_enclosed=False)}/s]',
+                units=f'[{data.units.label}/s]',
             ),
         ]
         plt.text(
@@ -51,7 +50,7 @@ def calculate_dark_current(data: Data, n: int, threshold: float = np.inf, show: 
             ha='left', va='top',
         )
         plt.xlabel(r'$\tau$ {units}'.format(units=r'[$ms$]'))
-        plt.ylabel(r'$U$ {units}'.format(units=f'[{get_units_label(data.units, is_enclosed=False)}/s]'))
+        plt.ylabel(r'$U$ {units}'.format(units=f'[{data.units.label}/s]'))
         plt.grid(color='grey', linestyle=':')
 
         plt.show()
@@ -64,7 +63,7 @@ def research_dark_current(data: Data, threshold: float | None = None, confidence
     """Calculate a dark current of the cells."""
     _, n_numbers = data.mean.shape
 
-    clipping_value = get_units_clipping(units=data.units)
+    clipping_value = data.units.value_max
     threshold = threshold or clipping_value
 
     current = np.zeros(n_numbers)
@@ -99,7 +98,7 @@ def research_dark_current(data: Data, threshold: float | None = None, confidence
         )
         plt.xlabel(r'$number$')
         plt.ylabel(r'$i_{{d}}$ {units}'.format(
-            units=f'[{get_units_label(data.units, is_enclosed=False)}/s]',
+            units=f'[{data.units.label}/s]',
         ))
         plt.grid(color='grey', linestyle=':')
 

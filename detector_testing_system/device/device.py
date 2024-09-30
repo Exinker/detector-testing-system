@@ -1,23 +1,16 @@
-from vmk_spectrum2_wrapper.device import Device, DeviceEthernetConfig
-from vmk_spectrum2_wrapper.storage import BufferDeviceStorage
+from vmk_spectrum3_wrapper.device import Device
+from vmk_spectrum3_wrapper.device.config import DeviceConfigManual
 
 from detector_testing_system.experiment import ExperimentConfig
 
 
-def run_device(config: ExperimentConfig, is_connected: bool = True) -> Device:
+def run_device(config: ExperimentConfig) -> Device:
 
     device = Device(
-        storage=BufferDeviceStorage(
-            buffer_size=1,
-        ),
-    )
-    device.create(
-        config=DeviceEthernetConfig(
+        config=DeviceConfigManual(
             ip=config.device_ip,
-        ),
+        )
     )
-
-    if is_connected:
-        device.connect()
+    device = device.connect()
 
     return device

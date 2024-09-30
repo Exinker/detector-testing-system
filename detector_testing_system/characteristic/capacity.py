@@ -2,8 +2,7 @@ from distfit import distfit
 import matplotlib.pyplot as plt
 import numpy as np
 
-from vmk_spectrum2_wrapper.typing import Array
-from vmk_spectrum2_wrapper.units import get_units_clipping
+from vmk_spectrum3_wrapper.typing import Array
 
 from detector_testing_system.characteristic.bias import calculate_bias
 from detector_testing_system.data import Data, to_array
@@ -12,7 +11,7 @@ from detector_testing_system.utils import calculate_stats, normalize_values, tre
 
 def calculate_capacity(data: Data, n: int, threshold: float | None = None, verbose: bool = False, show: bool = False) -> float:
     """Calculate capacity."""
-    clipping_value = get_units_clipping(units=data.units)
+    clipping_value = data.units.value_max
     threshold = clipping_value if threshold is None else threshold
     u, du, tau = to_array(data=data, n=n)
 
@@ -80,7 +79,7 @@ def research_capacity(data: Data, threshold: float | None = None, show: bool = F
     """Research capacity."""
     _, n_numbers = data.mean.shape
 
-    clipping_value = get_units_clipping(units=data.units)
+    clipping_value = data.units.value_max
     threshold = threshold or clipping_value
 
     capacity = np.zeros(n_numbers)

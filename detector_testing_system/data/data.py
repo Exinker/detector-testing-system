@@ -7,9 +7,9 @@ import matplotlib.pyplot as plt
 import numpy as np
 from tqdm.notebook import tqdm
 
-from vmk_spectrum2_wrapper.device import Device
-from vmk_spectrum2_wrapper.typing import Array, MilliSecond
-from vmk_spectrum2_wrapper.units import Units, get_units_label
+from vmk_spectrum3_wrapper.device import Device
+from vmk_spectrum3_wrapper.typing import Array, MilliSecond
+from vmk_spectrum3_wrapper.units import Units
 
 
 class Datum:
@@ -44,7 +44,7 @@ class Datum:
 
     @property
     def units_label(self) -> str:
-        return get_units_label(self.units)
+        return self.units.label
 
     # --------        handlers        --------
     def show(self) -> None:
@@ -112,7 +112,7 @@ class Data:
 
     @property
     def units_label(self) -> str:
-        return get_units_label(self.units)
+        return self.units.label
 
     def add(self, __data: Sequence[Datum]):
         self.data.extend(__data)
@@ -220,7 +220,33 @@ def read_data(device: Device, exposure: Sequence[MilliSecond], n_frames: int, ve
 def load_data(label: str, show: bool = False) -> Data:
     """Load data from `./data//<label>/data.pkl` file."""
 
-    data = Data.load(label=label)
+    try:
+        data = Data.load(label=label)
+
+    except AttributeError as error:
+
+        filedir = os.path.join('.', 'data', label)
+        filepath = os.path.join(filedir, 'dump.pkl')
+        with open(filepath, 'rb') as file:
+            tmp = pickle.load(file)
+
+        #
+        data = Data(
+            [
+                Datum(
+                    intensity=intensity,
+                    exposure=exposure,
+                    n_frames=n_frames,
+                    started_at=started_at,
+                    units={
+                        'Units.percent': Units.percent,
+                    }[units],
+                )
+                for intensity, exposure, n_frames, started_at, units in tmp
+            ],
+            units=Units.percent,
+            label=label,
+        )
 
     # show
     if show:

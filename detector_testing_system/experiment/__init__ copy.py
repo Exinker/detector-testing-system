@@ -1,8 +1,8 @@
 import os
 from configparser import ConfigParser
 
-from vmk_spectrum2_wrapper.device import Device, DeviceEthernetConfig
-from vmk_spectrum2_wrapper.storage import BufferDeviceStorage
+from vmk_spectrum3_wrapper.device import Device, DeviceEthernetConfig
+from vmk_spectrum3_wrapper.storage import BufferDeviceStorage
 
 from .config import Config
 

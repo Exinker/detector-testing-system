@@ -6,8 +6,8 @@ from typing import Callable
 import matplotlib.pyplot as plt
 import numpy as np
 
-from vmk_spectrum2_wrapper.typing import Array, MilliSecond
-from vmk_spectrum2_wrapper.device import Device
+from vmk_spectrum3_wrapper.typing import Array, MilliSecond
+from vmk_spectrum3_wrapper.device import Device
 
 from detector_testing_system.data import Data, read_datum, read_data
 from detector_testing_system.experiment.config import ExperimentConfig
@@ -106,7 +106,7 @@ def check_total(func: Callable) -> Callable:
             total += (n_frames + 1) * np.sum(exposure)  # FIXME: +1 frame
 
         n_exposures = sum([len(exposure) for n_frames, exposure in params])
-        total += device._change_exposure_delay * n_exposures
+        total += device.config.change_exposure_delay * n_exposures
 
         total = total/1e+3
 

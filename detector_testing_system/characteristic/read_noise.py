@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
-from vmk_spectrum2_wrapper.typing import Array
+from vmk_spectrum3_wrapper.typing import Array
 
 from detector_testing_system.data import Data
 

@@ -1,17 +1,19 @@
+from collections.abc import Sequence
 from configparser import ConfigParser
 from dataclasses import dataclass
 
-from vmk_spectrum2_wrapper.units import Units
-from vmk_spectrum2_wrapper.typing import MilliSecond
+from vmk_spectrum3_wrapper.detector import Detector
+from vmk_spectrum3_wrapper.units import Units
+from vmk_spectrum3_wrapper.typing import MilliSecond, IP
 
 
 @dataclass
 class ExperimentConfig:
     device_id: str
-    device_ip: str
+    device_ip: Sequence[IP]
     device_units: Units
 
-    detector: str
+    detector: Detector
 
     check_exposure_flag: bool
     check_exposure_min: MilliSecond
@@ -32,10 +34,14 @@ class ExperimentConfig:
 
         config = cls(
             device_id=parser.get('device', 'id'),
-            device_ip=parser.get('device', 'ip'),
+            device_ip=parser.get('device', 'ip').split(','),
             device_units=parser.get('device', 'units'),
 
-            detector=parser.get('detector', 'type'),
+            detector={
+                'BLPP-2000': Detector.BLPP2000,
+                'BLPP-4000': Detector.BLPP4000,
+                'BLPP-4100': Detector.BLPP4100,
+            }.get(parser.get('detector', 'type')),
 
             check_exposure_flag={
                 'False': False,
