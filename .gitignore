@@ -17,9 +17,9 @@ env/
 .*.ipynb
 .*.json
 
-.data/
-.TODO
-core/
-data/
-img/
-ini/
+/.TODO
+/.data/
+/core/
+/data/
+/img/
+/ini/
