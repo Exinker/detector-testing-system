@@ -2,7 +2,7 @@ import numpy as np
 
 from scipy import stats
 
-from vmk_spectrum2_wrapper.typing import Array
+from vmk_spectrum3_wrapper.typing import Array
 
 
 def calculate_stats(__values: Array[float], confidence: float = .99) -> tuple[float, float]:

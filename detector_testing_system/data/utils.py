@@ -1,7 +1,7 @@
 import numpy as np
 
-from vmk_spectrum2_wrapper.typing import Array, MilliSecond
-from vmk_spectrum2_wrapper.units import get_units_clipping
+from vmk_spectrum3_wrapper.typing import Array, MilliSecond
+# from vmk_spectrum3_wrapper.units import get_units_clipping
 
 from detector_testing_system.data.data import Data
 from detector_testing_system.data.exceptions import EmptyArrayError

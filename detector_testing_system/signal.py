@@ -5,8 +5,8 @@ import numpy as np
 
 from detector_testing_system.data.data import Data
 from detector_testing_system.data.exceptions import EmptyArrayError
-from vmk_spectrum2_wrapper.typing import Array, Electron, MilliSecond, Percent
-from vmk_spectrum2_wrapper.units import get_units_clipping
+from vmk_spectrum3_wrapper.typing import Array, Electron, MilliSecond, Percent
+from vmk_spectrum3_wrapper.units import get_units_clipping
 
 
 T = TypeVar('T', Electron, Percent)

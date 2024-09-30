@@ -4,8 +4,8 @@ from distfit import distfit
 import matplotlib.pyplot as plt
 import numpy as np
 
-from vmk_spectrum2_wrapper.typing import Array
-from vmk_spectrum2_wrapper.units import get_units_clipping
+from vmk_spectrum3_wrapper.typing import Array
+# from vmk_spectrum3_wrapper.units import get_units_clipping
 
 from detector_testing_system.characteristic.bias import calculate_bias
 from detector_testing_system.data import Data

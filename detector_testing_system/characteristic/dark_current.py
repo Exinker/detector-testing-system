@@ -1,8 +1,8 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
-from vmk_spectrum2_wrapper.typing import Array
-from vmk_spectrum2_wrapper.units import get_units_clipping, get_units_label
+from vmk_spectrum3_wrapper.typing import Array
+from vmk_spectrum3_wrapper.units import get_units_clipping, get_units_label
 
 from detector_testing_system.data import Data, to_array
 from detector_testing_system.utils import calculate_stats

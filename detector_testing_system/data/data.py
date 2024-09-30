@@ -3,15 +3,15 @@ from collections.abc import Sequence
 import pickle
 import reprlib
 from time import time
-from typing import Any, Mapping, Self
+from typing import Any, Mapping
 
 import matplotlib.pyplot as plt
 import numpy as np
 from tqdm.notebook import tqdm
 
-from vmk_spectrum2_wrapper.device import Device
-from vmk_spectrum2_wrapper.typing import Array, MilliSecond
-from vmk_spectrum2_wrapper.units import Units, get_units_label
+from vmk_spectrum3_wrapper.device import Device
+from vmk_spectrum3_wrapper.typing import Array, MilliSecond
+from vmk_spectrum3_wrapper.units import Units
 
 
 class Datum:
@@ -204,7 +204,7 @@ class Data:
             pickle.dump(self.dump(), file)
 
     @classmethod
-    def load(cls, label: str) -> Self:
+    def load(cls, label: str) -> 'Data':
         """Load data from filepath."""
 
         filedir = os.path.join('.', 'data', label)

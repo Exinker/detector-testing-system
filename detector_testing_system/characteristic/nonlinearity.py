@@ -5,7 +5,7 @@ import reprlib
 import matplotlib.pyplot as plt
 import numpy as np
 
-from vmk_spectrum2_wrapper.typing import Array, MilliSecond
+from vmk_spectrum3_wrapper.typing import Array, MilliSecond
 
 from detector_testing_system.data import Data, load_data, to_array
 
