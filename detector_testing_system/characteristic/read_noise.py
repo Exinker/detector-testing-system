@@ -22,7 +22,7 @@ def calculate_read_noise(data: Data, n: int, show: bool = False, bins: int = 100
             color='black',
         )
         plt.xlabel('time')
-        plt.ylabel(fr'$U$ {data.units_label}')
+        plt.ylabel(fr'$U$ {data.units.label}')
         plt.grid(color='grey', linestyle=':')
 
         plt.sca(ax_right)
@@ -31,7 +31,7 @@ def calculate_read_noise(data: Data, n: int, show: bool = False, bins: int = 100
             bins=bins,
             facecolor='white', edgecolor='black',
         )
-        plt.xlabel(fr'$U$ {data.units_label}')
+        plt.xlabel(fr'$U$ {data.units.label}')
         plt.ylabel('freq')
         plt.grid(color='grey', linestyle=':')
 
@@ -43,7 +43,7 @@ def calculate_read_noise(data: Data, n: int, show: bool = False, bins: int = 100
 
 def research_read_noise(data: Data, show: bool = False) -> Array[float]:
     """Calculate a read noise of the cells."""
-    _, n_numbers = data.mean.shape
+    n_numbers = data.n_numbers
 
     read_noise = np.mean(np.sqrt(data.variance), axis=0)
 
@@ -58,7 +58,7 @@ def research_read_noise(data: Data, show: bool = False) -> Array[float]:
             color='black',
         )
         plt.xlabel('number')
-        plt.ylabel(fr'$\sigma$ {data.units_label}')
+        plt.ylabel(fr'$\sigma$ {data.units.label}')
         plt.grid(color='grey', linestyle=':')
 
         plt.sca(ax_right)
@@ -67,7 +67,7 @@ def research_read_noise(data: Data, show: bool = False) -> Array[float]:
             bins=100,
             facecolor='white', edgecolor='black',
         )
-        plt.xlabel(fr'$\sigma$ {data.units_label}')
+        plt.xlabel(fr'$\sigma$ {data.units.label}')
         plt.ylabel('count')
         plt.grid(color='grey', linestyle=':')
 
@@ -93,7 +93,7 @@ def research_relative_read_noise(data: Data, show: bool = False) -> Array[float]
             color='black',
         )
         plt.xlabel('number')
-        plt.ylabel(fr'$\sigma / \Delta\sigma$ {data.units_label}')
+        plt.ylabel(fr'$\sigma / \Delta\sigma$ {data.units.label}')
         plt.grid(color='grey', linestyle=':')
 
         plt.sca(ax_right)
@@ -102,7 +102,7 @@ def research_relative_read_noise(data: Data, show: bool = False) -> Array[float]
             bins=100,
             facecolor='white', edgecolor='black',
         )
-        plt.xlabel(fr'$\sigma / \Delta\sigma$ {data.units_label}')
+        plt.xlabel(fr'$\sigma / \Delta\sigma$ {data.units.label}')
         plt.ylabel('freq')
         plt.grid(color='grey', linestyle=':')
 

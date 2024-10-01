@@ -5,7 +5,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from vmk_spectrum3_wrapper.typing import Array
-# from vmk_spectrum3_wrapper.units import get_units_clipping
 
 from detector_testing_system.characteristic.bias import calculate_bias
 from detector_testing_system.data import Data
@@ -15,46 +14,32 @@ from detector_testing_system.utils import calculate_stats, normalize_values, tre
 
 
 def calculate_efficiency(
-    data: Data,
-    n: int,
-    threshold: float | None = None,
+    signal: Signal,
+    threshold: float,
     verbose: bool = False,
     show: bool = False,
 ) -> float:
-    threshold = threshold or get_units_clipping(units=data.units)
 
-    try:
-        signal = Signal.create(data=data, n=n)
+    mask = signal.value < threshold
+    p = np.polyfit(signal.value[mask], signal.variance[mask], deg=1)
+    variance_hat = np.polyval(p, signal.value)
 
-    except EmptyArrayError as error:
-        if verbose:
-            print(error)
-
-        return float(np.nan)
-
+    angle = p[0]
+    if angle < 0:
+        efficiency = np.nan
     else:
-        mask = signal.value < threshold
-
-        p = np.polyfit(signal.value[mask], signal.variance[mask], deg=1)
-        variance_hat = np.polyval(p, signal.value)
-
-        bias = calculate_bias(
-            data=data,
-            n=n,
-            threshold=threshold,
-        )
-
-        angle = p[0]
-        if angle < 0:
-            efficiency = np.nan
-        else:
-            efficiency = 1/angle
+        efficiency = 1/angle
 
     if verbose:
         print(f'efficiency: {efficiency:.0f}, e/%')
 
     if show:
         fig, ax = plt.subplots(figsize=(6, 4))
+
+        bias = calculate_bias(
+            signal=signal,
+            threshold=threshold,
+        )
 
         plt.scatter(
             signal.value, signal.variance,
@@ -73,19 +58,19 @@ def calculate_efficiency(
             '\n'.join([
                 r'$U_{{b}}$: {value:.4f} {units}'.format(
                     value=bias,
-                    units=data.units_label,
+                    units=signal.units.label,
                 ),
                 r'$k$: {value:.0f} [$e^-/%$]'.format(
                     value=np.round(efficiency, 0),
                 ),
                 r'$c$: {value:.0f} [$e^-$]'.format(
-                    value=np.round(efficiency, 0) * get_units_clipping(units=data.units),
+                    value=np.round(efficiency, 0) * signal.units.value_max,
                 ),
             ]),
             transform=ax.transAxes,
             ha='left', va='top',
         )
-        plt.xlabel(r'$U$ {units}'.format(units=data.units_label))
+        plt.xlabel(r'$U$ {units}'.format(units=signal.units.label))
         plt.ylabel(r'$\sigma^{2}$')
         plt.grid(color='grey', linestyle=':')
 
@@ -97,17 +82,27 @@ def calculate_efficiency(
 def research_efficiency(
     data: Data,
     threshold: float | None = None,
+    verbose: bool = False,
     show: bool = False,
 ) -> Array[float]:
-    threshold = threshold or get_units_clipping(units=data.units)
+    threshold = threshold or data.units.value_max
 
     efficiency = np.zeros(data.n_numbers)
     for n in range(data.n_numbers):
-        efficiency[n] = calculate_efficiency(
-            data=data,
-            n=n,
-            threshold=threshold,
-        )
+        try:
+            value = calculate_efficiency(
+                signal=Signal.create(data=data, n=n),
+                threshold=threshold,
+            )
+
+        except EmptyArrayError as error:
+            value = float(np.nan)
+
+            if verbose:
+                print(error)
+
+        finally:
+            efficiency[n] = value
 
     if show:
         mean, ci = calculate_stats(efficiency)

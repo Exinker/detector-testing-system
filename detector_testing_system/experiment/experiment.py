@@ -62,21 +62,20 @@ def check_source(func: Callable) -> Callable:
             bias,
             color='red', linestyle='solid', linewidth=2,
         )
-        content = [
-            '{started_at} / {finished_at}'.format(
-                started_at=datetime.strftime(datetime.fromtimestamp(before.started_at), '%Y-%m-%d %H:%M:%S'),
-                finished_at=datetime.strftime(datetime.fromtimestamp(after.started_at), '%H:%M:%S'),
-            ),
-            'duration: {value}'.format(
-                value=datetime.strftime(datetime.utcfromtimestamp(duration), '%H:%M:%S'),
-            ),
-            'bias: {value:.2f} [%/h]'.format(
-                value=bias * (3600 / duration),
-            ),
-        ]
         plt.text(
             0.05/2, 0.95,
-            '\n'.join(content),
+            '\n'.join([
+                '{started_at} / {finished_at}'.format(
+                    started_at=datetime.strftime(datetime.fromtimestamp(before.started_at), '%Y-%m-%d %H:%M:%S'),
+                    finished_at=datetime.strftime(datetime.fromtimestamp(after.started_at), '%H:%M:%S'),
+                ),
+                'duration: {value}'.format(
+                    value=datetime.strftime(datetime.utcfromtimestamp(duration), '%H:%M:%S'),
+                ),
+                'bias: {value:.2f} [%/h]'.format(
+                    value=bias * (3600 / duration),
+                ),
+            ]),
             color='red',
             transform=ax_right.transAxes,
             ha='left', va='top',
@@ -87,7 +86,6 @@ def check_source(func: Callable) -> Callable:
 
         plt.show()
 
-        #
         return experiment
 
     return wrapper
