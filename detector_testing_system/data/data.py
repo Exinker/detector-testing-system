@@ -45,10 +45,6 @@ class Datum:
         return f'{self.exposure}'
 
     @property
-    def units_label(self) -> str:
-        return get_units_label(self.units)
-
-    @property
     def n_times(self) -> int:
         return self.intensity.shape[0]
 
@@ -66,7 +62,7 @@ class Datum:
         )
 
         plt.xlabel(r'$number$')
-        plt.ylabel(r'$U$ {units}'.format(units=self.units_label))
+        plt.ylabel(r'$U$ {units}'.format(units=self.units.label))
 
         plt.grid(color='grey', linestyle=':')
         plt.legend()
@@ -120,15 +116,17 @@ class Data:
 
     @property
     def started_at(self) -> float:
-        return self.data[0].started_at
+        return min(
+            datum.started_at
+            for datum in self.data
+        )
 
     @property
     def finished_at(self) -> float:
-        return self.data[-1].started_at
-
-    @property
-    def units_label(self) -> str:
-        return get_units_label(self.units)
+        return max(
+            datum.started_at
+            for datum in self.data
+        )
 
     @property
     def n_times(self) -> int:
@@ -158,20 +156,16 @@ class Data:
             self.mean.T,
             label=[reprlib.repr(datum.label) for datum in self.data],
         )
-
-        content = '\n'.join([
-            fr'{str(reprlib.repr(self.label))}',
-        ])
         ax.text(
             0.95, 0.95,
-            content,
+            '\n'.join([
+                fr'{str(reprlib.repr(self.label))}',
+            ]),
             transform=ax.transAxes,
             ha='right', va='top',
         )
-
         plt.xlabel(r'$number$')
-        plt.ylabel(r'$U$ {units}'.format(units=self.units_label))
-
+        plt.ylabel(r'$U$ {units}'.format(units=self.units.label))
         plt.grid(color='grey', linestyle=':')
         plt.legend().set_visible(legend)
 
