@@ -88,7 +88,7 @@ class Datum:
 class Data:
 
     def __init__(self, __data: Sequence[Datum], units: Units, label: str = ''):
-        self.data = list(__data)
+        self.data = tuple(__data)
         self.units = units
         self.label = label
 
@@ -142,7 +142,7 @@ class Data:
             assert all(self.n_numbers == datum.n_numbers for datum in __data)
 
         try:
-            self.data.extend(__data)
+            self.data += tuple(__data)
 
         except Exception:
             raise
