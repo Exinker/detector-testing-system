@@ -1,11 +1,10 @@
-tqdm
+distfit==1.7.3
+matplotlib==3.8.3
+numpy==1.26.4
+scipy==1.12.0
+tqdm==4.66.2
 
-matplotlib
-numpy
-distfit
-scipy
-
-jupyter
+jupyter==1.0.0
 
 # vmk_spectrum3-0.2.0-cp310-cp310-win_amd64.whl
-vmk_spectrum3_wrapper @ git+https://github.com/Exinker/vmk_spectrum3_wrapper
+vmk_spectrum3_wrapper @ git+https://github.com/Exinker/vmk_spectrum3_wrapper@06368ef3881574a88d339a80f6175d1c866e0cb5

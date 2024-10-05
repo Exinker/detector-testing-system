@@ -3,8 +3,7 @@ import numpy as np
 
 from vmk_spectrum3_wrapper.typing import Array
 
-from detector_testing_system.data import Data
-from detector_testing_system.data.exceptions import EmptyArrayError
+from detector_testing_system.data import Data, EmptyArrayError
 from detector_testing_system.output import Output
 from detector_testing_system.utils import calculate_stats
 

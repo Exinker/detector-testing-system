@@ -1,6 +1,12 @@
 from setuptools import find_packages, setup
 
-from detector_testing_system import APPLICATION_DESCRIPTION, APPLICATION_NAME, APPLICATION_VERSION, AUTHOR_EMAIL, AUTHOR_NAME
+from detector_testing_system import (
+    APPLICATION_DESCRIPTION,
+    AUTHOR_EMAIL,
+    APPLICATION_NAME,
+    APPLICATION_VERSION,
+    AUTHOR_NAME,
+)
 
 
 setup(

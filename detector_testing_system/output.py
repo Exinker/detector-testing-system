@@ -4,8 +4,7 @@ import numpy as np
 from vmk_spectrum3_wrapper.typing import Array, MilliSecond
 from vmk_spectrum3_wrapper.units import Units
 
-from detector_testing_system.data.data import Data
-from detector_testing_system.data.exceptions import EmptyArrayError
+from detector_testing_system.data import Data, EmptyArrayError
 from detector_testing_system.types import T
 
 

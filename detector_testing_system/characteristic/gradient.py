@@ -1,4 +1,5 @@
 import os
+import reprlib
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -40,7 +41,7 @@ def calculate_gradient(
         ax_right.text(
             0.95, 0.95,
             '\n'.join([
-                fr'{output.label}',
+                reprlib.repr(output.label),
                 fr'n: {output.n}',
             ]),
             transform=ax_right.transAxes,
