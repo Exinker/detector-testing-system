@@ -72,7 +72,7 @@ class Datum:
 
         plt.show()
 
-    def dump(self) -> Mapping[str, Any]:
+    def _dump(self) -> Mapping[str, Any]:
         return {
             'intensity': pickle.dumps(self.intensity),
             'exposure': pickle.dumps(self.exposure),
@@ -184,14 +184,6 @@ class Data:
 
         plt.show()
 
-    def dump(self) -> Mapping[str, Any]:
-        return {
-            'version': VERSION,
-            'data': tuple([datum.dump() for datum in self.data]),
-            'units': str(self.units),
-            'label': str(self.label),
-        }
-
     def save(self) -> None:
         """Save data to `./data//<label>/data.pkl` file."""
 
@@ -201,7 +193,7 @@ class Data:
 
         filepath = os.path.join(filedir, 'data.pkl')
         with open(filepath, 'wb') as file:
-            pickle.dump(self.dump(), file)
+            pickle.dump(self._dump(), file)
 
     @classmethod
     def load(cls, label: str) -> 'Data':
@@ -233,6 +225,14 @@ class Data:
         )
 
         return data
+
+    def _dump(self) -> Mapping[str, Any]:
+        return {
+            'version': VERSION,
+            'data': tuple([datum._dump() for datum in self.data]),
+            'units': str(self.units),
+            'label': str(self.label),
+        }
 
     def __getitem__(self, index: int) -> Datum:
         return self.data[index]
