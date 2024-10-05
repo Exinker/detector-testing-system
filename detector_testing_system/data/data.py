@@ -119,42 +119,38 @@ class Data:
 
     @property
     def started_at(self) -> float:
-        return min(
-            datum.started_at
-            for datum in self.data
-        )
+        return min(datum.started_at for datum in self.data)
 
     @property
     def finished_at(self) -> float:
-        return max(
-            datum.started_at
-            for datum in self.data
-        )
+        return max(datum.started_at for datum in self.data)
 
     @property
-    def n_times(self) -> int:
+    def n_numbers(self) -> int | None:
         if not self.data:
-            return 0
-
-        return self.data[0].n_times
-
-    @property
-    def n_numbers(self) -> int:
-        if not self.data:
-            return 0
+            return None
 
         return self.data[0].n_numbers
 
-    def concatenate(self, n: int | None = None) -> Array[T]:
-        if n:
-            return np.concatenate([datum.intensity[:, n] for datum in self])
+    def concatenate(self, n: int) -> Array[T]:
+        assert len(set(datum.n_numbers for datum in self)) == 1
 
-        return np.concatenate([datum.intensity for datum in self])
+        return np.concatenate([datum.intensity[:, n] for datum in self])
 
     def add(self, __data: Sequence[Datum]):
-        # TODO: check input data shape!
+        if self.n_numbers:
+            assert all(self.n_numbers == datum.n_numbers for datum in __data)
 
-        self.data.extend(__data)
+        try:
+            self.data.extend(__data)
+
+        except Exception:
+            raise
+
+        else:
+            self._average = None
+            self._variance = None
+            self._exposure = None
 
     def show(self, legend: bool = False, save: bool = False) -> None:
         """Show data."""
