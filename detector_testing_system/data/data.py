@@ -61,7 +61,7 @@ class Datum:
 
         plt.plot(
             self.average,
-            label=f'{self.label}',
+            label=reprlib.repr(self.label),
         )
 
         plt.xlabel(r'$number$')

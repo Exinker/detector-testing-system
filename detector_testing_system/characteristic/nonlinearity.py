@@ -136,7 +136,7 @@ def research_nonlinearity(
         ax.text(
             0.05/2, 0.95,
             '\n'.join([
-                fr'{data.label}',
+                reprlib.repr(data.label),
             ]),
             transform=ax.transAxes,
             ha='left', va='top',
