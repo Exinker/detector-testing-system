@@ -5,36 +5,36 @@ from vmk_spectrum3_wrapper.typing import Array
 
 from detector_testing_system.data import Data
 from detector_testing_system.data.exceptions import EmptyArrayError
-from detector_testing_system.signal import Signal
+from detector_testing_system.output import Output
 from detector_testing_system.utils import calculate_stats
 
 
 def calculate_bias(
-    signal: Signal,
+    output: Output,
     threshold: float,
     show: bool = False,
 ) -> float:
     """Calculate a bias of the cell."""
 
-    mask = signal.value < threshold
-    p = np.polyfit(signal.exposure[mask], signal.value[mask], deg=1)
+    mask = output.average < threshold
+    p = np.polyfit(output.exposure[mask], output.average[mask], deg=1)
     bias = p[1]
 
-    u_hat = np.polyval(p, signal.exposure)
+    u_hat = np.polyval(p, output.exposure)
 
     if show:
         fig, ax = plt.subplots(figsize=(6, 4), tight_layout=True)
 
         plt.scatter(
-            signal.exposure, signal.value,
+            output.exposure, output.average,
             c='grey', s=10,
         )
         plt.scatter(
-            signal.exposure[mask], signal.value[mask],
+            output.exposure[mask], output.average[mask],
             c='red', s=10,
         )
         plt.plot(
-            signal.exposure, u_hat,
+            output.exposure, u_hat,
             color='black', linestyle='-', linewidth=1,
         )
         plt.scatter(
@@ -46,18 +46,18 @@ def calculate_bias(
             0.05/2, 0.95,
             '\n'.join([
                 r'$n$: {n:.0f}'.format(
-                    n=signal.n,
+                    n=output.n,
                 ),
                 r'$U_{{b}}$: {value:.4f} {units}'.format(
                     value=bias,
-                    units=signal.units.label,
+                    units=output.units.label,
                 ),
             ]),
             transform=ax.transAxes,
             ha='left', va='top',
         )
         plt.xlabel(r'$\tau$ {units}'.format(units=r'[$ms$]'))
-        plt.ylabel(r'$U$ {units}'.format(units=signal.units.label))
+        plt.ylabel(r'$U$ {units}'.format(units=output.units.label))
         plt.grid(color='grey', linestyle=':')
 
         plt.show()
@@ -79,7 +79,7 @@ def research_bias(
     for n in range(data.n_numbers):
         try:
             value = calculate_bias(
-                signal=Signal.create(data=data, n=n),
+                output=Output.create(data=data, n=n),
                 threshold=threshold,
             )
 

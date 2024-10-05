@@ -9,40 +9,40 @@ from vmk_spectrum3_wrapper.typing import Array, MilliSecond
 
 from detector_testing_system.data import Data, load_data
 from detector_testing_system.data.exceptions import EmptyArrayError
-from detector_testing_system.signal import Signal
+from detector_testing_system.output import Output
 
 
 def calculate_nonlinearity(
-    signal: Signal,
+    output: Output,
     span: tuple[MilliSecond, MilliSecond] = None,
     show: bool = False,
     xlim: tuple[float, float] = None,
     ylim: tuple[float, float] = None,
 ) -> tuple[Array[float], float]:
-    span = span or (min(signal.exposure), max(signal.exposure))
+    span = span or (min(output.exposure), max(output.exposure))
 
-    mask = (signal.exposure >= span[0]) & (signal.exposure <= span[1])
-    p = _optimize(signal.exposure[mask], signal.value[mask])
-    u_hat = np.polyval(p, signal.exposure)
+    mask = (output.exposure >= span[0]) & (output.exposure <= span[1])
+    p = _optimize(output.exposure[mask], output.average[mask])
+    u_hat = np.polyval(p, output.exposure)
 
-    xi = _calculate_xi(signal.exposure, signal.value, p)
-    alpha = _calculate_alpha(signal.exposure[mask], signal.value[mask], p)
+    xi = _calculate_xi(output.exposure, output.average, p)
+    alpha = _calculate_alpha(output.exposure[mask], output.average[mask], p)
 
     if show:
         fig, (ax_left, ax_right) = plt.subplots(nrows=1, ncols=2, figsize=(12, 4))
 
         plt.sca(ax_left)
         plt.scatter(
-            signal.exposure, signal.value,
+            output.exposure, output.average,
             c='grey', s=10,
         )
         plt.scatter(
-            signal.exposure[mask], signal.value[mask],
+            output.exposure[mask], output.average[mask],
             c='red', s=10,
             label=r'$U$',
         )
         plt.plot(
-            signal.exposure, u_hat,
+            output.exposure, u_hat,
             color='black', linestyle='solid', linewidth=1,
             label=r'$\hat{U}$',
         )
@@ -56,25 +56,25 @@ def calculate_nonlinearity(
             ha='right', va='bottom',
         )
         plt.xlabel(r'$\tau$ [ms]')
-        plt.ylabel(r'$U$ {units}'.format(units=signal.units.label))
+        plt.ylabel(r'$U$ {units}'.format(units=output.units.label))
         plt.grid(color='grey', linestyle=':')
         plt.legend()
 
         plt.sca(ax_right)
         plt.scatter(
-            signal.value, xi,
+            output.average, xi,
             c='grey', s=10,
         )
         plt.scatter(
-            signal.value[mask], xi[mask],
+            output.average[mask], xi[mask],
             c='red', s=10,
             label=r'$U$',
         )
         ax_right.text(
             0.95, 0.95,
             '\n'.join([
-                fr'{str(reprlib.repr(signal.label))}',
-                fr'n: {signal.n}',
+                fr'{str(reprlib.repr(output.label))}',
+                fr'n: {output.n}',
                 fr'$\alpha: {{{alpha:.2f}}}$ [%]',
             ]),
             transform=ax_right.transAxes,
@@ -92,15 +92,15 @@ def calculate_nonlinearity(
             plt.xlim(xlim)
         if ylim:
             plt.ylim(ylim)
-        plt.xlabel(r'$U$ {units}'.format(units=signal.units.label))
+        plt.xlabel(r'$U$ {units}'.format(units=output.units.label))
         plt.ylabel(r'$error$ [%]')
         plt.grid(color='grey', linestyle=':')
 
-        filedir = os.path.join('.', 'img', signal.label)
+        filedir = os.path.join('.', 'img', output.label)
         if not os.path.isdir(filedir):
             os.mkdir(filedir)
 
-        filepath = os.path.join(filedir, f'nonlinearity ({signal.n}).png')
+        filepath = os.path.join(filedir, f'nonlinearity ({output.n}).png')
         plt.savefig(filepath)
 
         plt.show()
@@ -118,7 +118,7 @@ def research_nonlinearity(
     for n in range(data.n_numbers):
         try:
             _, value = calculate_nonlinearity(
-                signal=Signal.create(data=data, n=n),
+                output=Output.create(data=data, n=n),
             )
 
         except EmptyArrayError as error:
@@ -168,15 +168,14 @@ def compare_nonlinearity(
             label=label,
         )
 
-        signal = Signal.create(data=data, n=n)
+        output = Output.create(data=data, n=n)
         xi, alpha = calculate_nonlinearity(
-            data=data,
-            n=n,
+            output=output,
         )
 
         plt.sca(ax_left)
         plt.scatter(
-            signal.exposure, signal.value,
+            output.exposure, output.average,
             s=10,
             label=label.split(' ')[0],
         )
@@ -187,7 +186,7 @@ def compare_nonlinearity(
 
         plt.sca(ax_right)
         plt.scatter(
-            signal.value, xi,
+            output.average, xi,
             s=10,
             label=label.split(' ')[0],
         )

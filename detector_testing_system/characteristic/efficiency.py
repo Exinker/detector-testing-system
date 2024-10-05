@@ -9,20 +9,20 @@ from vmk_spectrum3_wrapper.typing import Array
 from detector_testing_system.characteristic.bias import calculate_bias
 from detector_testing_system.data import Data
 from detector_testing_system.data.exceptions import EmptyArrayError
-from detector_testing_system.signal import Signal
+from detector_testing_system.output import Output
 from detector_testing_system.utils import calculate_stats, normalize_values, treat_outliers
 
 
 def calculate_efficiency(
-    signal: Signal,
+    output: Output,
     threshold: float,
     verbose: bool = False,
     show: bool = False,
 ) -> float:
 
-    mask = signal.value < threshold
-    p = np.polyfit(signal.value[mask], signal.variance[mask], deg=1)
-    variance_hat = np.polyval(p, signal.value)
+    mask = output.average < threshold
+    p = np.polyfit(output.average[mask], output.variance[mask], deg=1)
+    variance_hat = np.polyval(p, output.average)
 
     angle = p[0]
     if angle < 0:
@@ -31,26 +31,26 @@ def calculate_efficiency(
         efficiency = 1/angle
 
     if verbose:
-        print(f'efficiency: {efficiency:.0f}, e/%')
+        print(f'efficiency: {efficiency:.0f}, e\%')
 
     if show:
         fig, ax = plt.subplots(figsize=(6, 4))
 
         bias = calculate_bias(
-            signal=signal,
+            output=output,
             threshold=threshold,
         )
 
         plt.scatter(
-            signal.value, signal.variance,
+            output.average, output.variance,
             c='grey', s=10,
         )
         plt.scatter(
-            signal.value[mask], signal.variance[mask],
+            output.average[mask], output.variance[mask],
             c='red', s=10,
         )
         plt.plot(
-            signal.value, variance_hat,
+            output.average, variance_hat,
             linestyle='solid', c='grey',
         )
         plt.text(
@@ -58,19 +58,19 @@ def calculate_efficiency(
             '\n'.join([
                 r'$U_{{b}}$: {value:.4f} {units}'.format(
                     value=bias,
-                    units=signal.units.label,
+                    units=output.units.label,
                 ),
-                r'$k$: {value:.0f} [$e^-/%$]'.format(
+                r'$k$: {value:.0f} [$e^-/\%$]'.format(
                     value=np.round(efficiency, 0),
                 ),
                 r'$c$: {value:.0f} [$e^-$]'.format(
-                    value=np.round(efficiency, 0) * signal.units.value_max,
+                    value=np.round(efficiency, 0) * output.units.value_max,
                 ),
             ]),
             transform=ax.transAxes,
             ha='left', va='top',
         )
-        plt.xlabel(r'$U$ {units}'.format(units=signal.units.label))
+        plt.xlabel(r'$U$ {units}'.format(units=output.units.label))
         plt.ylabel(r'$\sigma^{2}$')
         plt.grid(color='grey', linestyle=':')
 
@@ -91,7 +91,7 @@ def research_efficiency(
     for n in range(data.n_numbers):
         try:
             value = calculate_efficiency(
-                signal=Signal.create(data=data, n=n),
+                output=Output.create(data=data, n=n),
                 threshold=threshold,
             )
 

@@ -4,20 +4,20 @@ import numpy as np
 from vmk_spectrum3_wrapper.typing import Array
 
 from detector_testing_system.data import Data
+from detector_testing_system.types import T
 
 
-def calculate_read_noise(data: Data, n: int, show: bool = False, bins: int = 100) -> Array[float]:
-    """Calculate a read noise of the cell."""
+def show_intensity(data: Data, n: int, show: bool = False, bins: int = 100) -> Array[float]:
+    """Show a intensity of the cell."""
 
-    read_noise = np.concatenate([datum.intensity[:,n] for datum in data])
+    intensity = data.concatenate(n=n)
 
-    # show
     if show:
         fig, (ax_left, ax_right) = plt.subplots(nrows=1, ncols=2, figsize=(12, 4), tight_layout=True)
 
         plt.sca(ax_left)
         plt.plot(
-            read_noise,
+            intensity,
             linestyle='none', marker='.', markersize=1,
             color='black',
         )
@@ -27,7 +27,7 @@ def calculate_read_noise(data: Data, n: int, show: bool = False, bins: int = 100
 
         plt.sca(ax_right)
         plt.hist(
-            read_noise,
+            intensity,
             bins=bins,
             facecolor='white', edgecolor='black',
         )
@@ -37,17 +37,14 @@ def calculate_read_noise(data: Data, n: int, show: bool = False, bins: int = 100
 
         plt.show()
 
-    #
-    return read_noise
+    return intensity
 
 
 def research_read_noise(data: Data, show: bool = False) -> Array[float]:
     """Calculate a read noise of the cells."""
-    n_numbers = data.n_numbers
 
     read_noise = np.mean(np.sqrt(data.variance), axis=0)
 
-    # show
     if show:
         fig, (ax_left, ax_right) = plt.subplots(nrows=1, ncols=2, figsize=(12, 4), tight_layout=True)
 
@@ -73,7 +70,6 @@ def research_read_noise(data: Data, show: bool = False) -> Array[float]:
 
         plt.show()
 
-    #
     return read_noise
 
 
@@ -82,7 +78,6 @@ def research_relative_read_noise(data: Data, show: bool = False) -> Array[float]
 
     read_noise = 100 * np.std(np.sqrt(data.variance), ddof=1, axis=0) / np.mean(np.sqrt(data.variance), axis=0)
 
-    # show
     if show:
         fig, (ax_left, ax_right) = plt.subplots(nrows=1, ncols=2, figsize=(12, 4), tight_layout=True)
 
@@ -108,5 +103,4 @@ def research_relative_read_noise(data: Data, show: bool = False) -> Array[float]
 
         plt.show()
 
-    #
     return read_noise

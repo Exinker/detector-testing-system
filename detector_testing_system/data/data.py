@@ -9,32 +9,35 @@ import matplotlib.pyplot as plt
 import numpy as np
 from tqdm.notebook import tqdm
 
+from vmk_spectrum3_wrapper import VERSION
 from vmk_spectrum3_wrapper.device import Device
 from vmk_spectrum3_wrapper.typing import Array, MilliSecond
 from vmk_spectrum3_wrapper.units import Units
 
+from detector_testing_system.types import T
+
 
 class Datum:
 
-    def __init__(self, intensity: Array[float], exposure: MilliSecond, n_frames: int, started_at: float, units: Units):
+    def __init__(self, intensity: Array[T], exposure: MilliSecond, n_frames: int, started_at: float, units: Units):
         self.intensity = intensity
         self.exposure = exposure
         self.n_frames = n_frames
         self.started_at = started_at
         self.units = units
 
-        self._mean = None
+        self._average = None
         self._variance = None
 
     @property
-    def mean(self) -> Array[float]:
-        if self._mean is None:
-            self._mean = np.mean(self.intensity, axis=0)
+    def average(self) -> Array[T]:
+        if self._average is None:
+            self._average = np.mean(self.intensity, axis=0)
 
-        return self._mean
+        return self._average
 
     @property
-    def variance(self) -> Array[float]:
+    def variance(self) -> Array[T]:
         if self._variance is None:
             self._variance = np.std(self.intensity, axis=0, ddof=1) ** 2
 
@@ -57,7 +60,7 @@ class Datum:
         fig, ax = plt.subplots(figsize=(6, 4), tight_layout=True)
 
         plt.plot(
-            self.mean,
+            self.average,
             label=f'{self.label}',
         )
 
@@ -89,26 +92,26 @@ class Data:
         self.units = units
         self.label = label
 
-        self._mean = None
+        self._average = None
         self._variance = None
         self._exposure = None
 
     @property
-    def mean(self) -> Array[float]:
-        if self._mean is None:
-            self._mean = np.array([datum.mean for datum in self.data])
+    def average(self) -> Array[T]:
+        if self._average is None:
+            self._average = np.array([datum.average for datum in self.data])
 
-        return self._mean
+        return self._average
 
     @property
-    def variance(self) -> Array[float]:
+    def variance(self) -> Array[T]:
         if self._variance is None:
             self._variance = np.array([datum.variance for datum in self.data])
 
         return self._variance
 
     @property
-    def exposure(self) -> Array[float]:
+    def exposure(self) -> Array[MilliSecond]:
         if self._exposure is None:
             self._exposure = np.array([datum.exposure for datum in self.data])
 
@@ -142,6 +145,12 @@ class Data:
 
         return self.data[0].n_numbers
 
+    def concatenate(self, n: int | None = None) -> Array[T]:
+        if n:
+            return np.concatenate([datum.intensity[:, n] for datum in self])
+
+        return np.concatenate([datum.intensity for datum in self])
+
     def add(self, __data: Sequence[Datum]):
         # TODO: check input data shape!
 
@@ -153,7 +162,7 @@ class Data:
         fig, ax = plt.subplots(figsize=(6, 4), tight_layout=True)
 
         plt.plot(
-            self.mean.T,
+            self.average.T,
             label=[reprlib.repr(datum.label) for datum in self.data],
         )
         ax.text(
@@ -181,6 +190,7 @@ class Data:
 
     def dump(self) -> Mapping[str, Any]:
         return {
+            'version': VERSION,
             'data': tuple([datum.dump() for datum in self.data]),
             'units': str(self.units),
             'label': str(self.label),
