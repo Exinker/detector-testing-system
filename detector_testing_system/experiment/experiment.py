@@ -9,7 +9,7 @@ import numpy as np
 from vmk_spectrum3_wrapper.typing import Array, MilliSecond
 from vmk_spectrum3_wrapper.device import Device
 
-from detector_testing_system.data import Data, read_datum, read_data
+from detector_testing_system.data import Data, read_data
 from detector_testing_system.experiment.config import ExperimentConfig
 
 
@@ -21,15 +21,15 @@ def check_source(func: Callable) -> Callable:
             return func(device, config, *args, **kwargs)
 
         #
-        before = read_datum(
+        before = read_data(
             device,
-            exposure=config.check_source_tau,
+            exposure=[config.check_source_tau],
             n_frames=config.check_source_n_frames,
         )
         experiment = func(device, config, *args, **kwargs)
-        after = read_datum(
+        after = read_data(
             device,
-            exposure=config.check_source_tau,
+            exposure=[config.check_source_tau],
             n_frames=config.check_source_n_frames,
         )
 
@@ -163,12 +163,12 @@ def run_experiment(device: Device, config: ExperimentConfig, params: Sequence[tu
         # read
         data = Data([], units=device.storage.units, label=label)
         for n_frames, exposure in params:
-            tmp = read_data(
+            dat = read_data(
                 device,
                 exposure=exposure,
                 n_frames=n_frames,
             )
-            data.add(tmp.data)
+            data.add(dat.data)
 
         # save
         data.save()

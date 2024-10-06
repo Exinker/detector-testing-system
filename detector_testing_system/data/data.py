@@ -137,12 +137,12 @@ class Data:
 
         return np.concatenate([datum.intensity[:, n] for datum in self])
 
-    def add(self, __data: Sequence[Datum]):
+    def add(self, __data: 'Data'):
         if self.n_numbers:
             assert all(self.n_numbers == datum.n_numbers for datum in __data)
 
         try:
-            self.data += tuple(__data)
+            self.data = tuple([__data])
 
         except Exception:
             raise
@@ -243,40 +243,21 @@ class Data:
 
 
 # --------        handlers        --------
-def read_datum(device: Device, exposure: MilliSecond, n_frames: int) -> Datum:
-    """Read datum with a given `tau` and `n_frames`."""
-
-    device.set_exposure(exposure)
-
-    started_at = time()
-    intensity = device.await_read(
-        n_frames=n_frames+1,  # записать один лишний кадр (нередко первый кадр приходит с старым временем экспозиции из-за ошибки в устройстве)
-    )
-    intensity = intensity.reshape(intensity.shape[0], intensity.shape[2])
-
-    return Datum(
-        intensity=intensity[1:],  # выкинуть первый кадр (лишний)
-        exposure=exposure,
-        n_frames=n_frames,
-        started_at=started_at,
-        units=device.storage.units,
-    )
-
-
 def read_data(device: Device, exposure: Sequence[MilliSecond], n_frames: int, verbose: bool = True) -> Data:
     """Read data with a given sequence of `exposure` and `n_frames`."""
 
-    data = []
+    data = Data([], units=Units.percent, label='read data')  # FIXME: change units!
     for tau in tqdm(exposure, disable=not verbose):
-        datum = read_datum(device, exposure=tau, n_frames=n_frames)
+        device.setup(
+            n_times=1,
+            exposure=tau,
+            capacity=n_frames,
+        )
 
-        data.append(datum)
+        dat = device.read()
+        data.add(dat)
 
-    #
-    return Data(
-        data,
-        units=device.storage.units,
-    )
+    return data
 
 
 def load_data(label: str, show: bool = False) -> Data:
