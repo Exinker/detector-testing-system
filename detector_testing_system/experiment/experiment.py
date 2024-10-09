@@ -6,10 +6,10 @@ from typing import Callable
 import matplotlib.pyplot as plt
 import numpy as np
 
-from vmk_spectrum3_wrapper.typing import Array, MilliSecond
+from vmk_spectrum3_wrapper.types import Array, MilliSecond
 from vmk_spectrum3_wrapper.device import Device
 
-from detector_testing_system.data import Data, read_data
+from detector_testing_system.experiment import Data, read_data
 from detector_testing_system.experiment.config import ExperimentConfig
 
 

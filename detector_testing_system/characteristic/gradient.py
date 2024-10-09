@@ -4,7 +4,7 @@ import reprlib
 import matplotlib.pyplot as plt
 import numpy as np
 
-from vmk_spectrum3_wrapper.typing import Array
+from vmk_spectrum3_wrapper.types import Array
 
 from detector_testing_system.output import Output
 

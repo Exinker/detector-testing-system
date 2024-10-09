@@ -1,17 +1,16 @@
 from dataclasses import dataclass
 import numpy as np
 
-from vmk_spectrum3_wrapper.typing import Array, MilliSecond
-from vmk_spectrum3_wrapper.units import Units
+from vmk_spectrum3_wrapper.types import Array, MilliSecond
+from vmk_spectrum3_wrapper.units import U, Units
 
-from detector_testing_system.data import Data, EmptyArrayError
-from detector_testing_system.types import T
+from detector_testing_system.experiment import Data, EmptyArrayError
 
 
 @dataclass
 class Output:
-    average: Array[T]
-    variance: Array[T]
+    average: Array[U]
+    variance: Array[U]
     exposure: Array[MilliSecond]
     n: int
     label: str

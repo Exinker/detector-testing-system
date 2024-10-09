@@ -5,9 +5,9 @@ import reprlib
 import matplotlib.pyplot as plt
 import numpy as np
 
-from vmk_spectrum3_wrapper.typing import Array, MilliSecond
+from vmk_spectrum3_wrapper.types import Array, MilliSecond
 
-from detector_testing_system.data import Data, EmptyArrayError, load_data
+from detector_testing_system.experiment import Data, EmptyArrayError, load_data
 from detector_testing_system.output import Output
 
 

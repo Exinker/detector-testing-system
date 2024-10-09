@@ -1,9 +1,9 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
-from vmk_spectrum3_wrapper.typing import Array
+from vmk_spectrum3_wrapper.types import Array
 
-from detector_testing_system.data import Data
+from detector_testing_system.experiment import Data
 
 
 def show_intensity(data: Data, n: int, show: bool = False, bins: int = 100) -> Array[float]:

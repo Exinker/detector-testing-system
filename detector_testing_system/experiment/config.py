@@ -1,7 +1,7 @@
 from configparser import ConfigParser
 from dataclasses import dataclass
 
-from vmk_spectrum3_wrapper.typing import MilliSecond
+from vmk_spectrum3_wrapper.types import MilliSecond
 from vmk_spectrum3_wrapper.units import Units
 
 
