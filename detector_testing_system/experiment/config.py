@@ -20,6 +20,7 @@ class ExperimentConfig:
     check_total_flag: bool
 
     check_source_flag: bool
+    check_source_show: bool
     check_source_tau: MilliSecond
     check_source_n_frames: int
 
@@ -53,6 +54,10 @@ class ExperimentConfig:
                 'False': False,
                 'True': True,
             }[parser.get('check', 'check_source_flag')],
+            check_source_show={
+                'False': False,
+                'True': True,
+            }[parser.get('check', 'check_source_show')],
             check_source_tau=float(parser.get('check', 'check_source_tau')),
             check_source_n_frames=int(parser.get('check', 'check_source_n_frames')),
         )
