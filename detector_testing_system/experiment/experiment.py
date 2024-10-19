@@ -1,99 +1,111 @@
-import os
 from collections.abc import Sequence
 from datetime import datetime
+from functools import wraps
+import itertools
+import os
 from typing import Callable
 
 import matplotlib.pyplot as plt
 import numpy as np
 
-from vmk_spectrum3_wrapper.types import Array, MilliSecond
 from vmk_spectrum3_wrapper.device import Device
+from vmk_spectrum3_wrapper.types import Array, MilliSecond
 
-from detector_testing_system.experiment import Data, read_data
 from detector_testing_system.experiment.config import ExperimentConfig
+from detector_testing_system.experiment.data import Data, read_data
 
 
-def check_source(func: Callable) -> Callable:
+def check_source(show: bool = True) -> Callable:
     """Check a stability of the light source."""
 
-    def wrapper(device: Device, config: ExperimentConfig, *args, **kwargs):
-        if config.check_source_flag is False:
-            return func(device, config, *args, **kwargs)
+    def inner(func: Callable) -> Callable:
 
-        #
-        before = read_data(
-            device,
-            exposure=[config.check_source_tau],
-            n_frames=config.check_source_n_frames,
-        )
-        experiment = func(device, config, *args, **kwargs)
-        after = read_data(
-            device,
-            exposure=[config.check_source_tau],
-            n_frames=config.check_source_n_frames,
-        )
+        @wraps(func)
+        def wrapper(device: Device, config: ExperimentConfig, *args, **kwargs):
+            if config.check_source_flag is False:
+                return func(device, config, *args, **kwargs)
 
-        duration = after.started_at - before.started_at
-        bias = np.mean(after.mean - before.mean)
+            before = read_data(
+                device,
+                exposure=[config.check_source_tau],
+                n_frames=config.check_source_n_frames,
+                verbose=False,
+            )
+            experiment = func(device, config, *args, **kwargs)
+            after = read_data(
+                device,
+                exposure=[config.check_source_tau],
+                n_frames=config.check_source_n_frames,
+                verbose=False,
+            )
 
-        # show
-        fig, (ax_left, ax_right) = plt.subplots(nrows=1, ncols=2, figsize=(12, 4), tight_layout=True)
+            duration = after.started_at - before.started_at
+            bias = np.mean(after.average - before.average)
 
-        plt.sca(ax_left)
-        plt.plot(
-            before.mean,
-            label='before',
-        )
-        plt.plot(
-            after.mean,
-            label='after',
-        )
-        plt.xlabel(r'number')
-        plt.ylabel(r'$U$')
-        plt.grid(color='grey', linestyle=':')
-        plt.legend()
+            if show:
+                fig, (ax_left, ax_right) = plt.subplots(nrows=1, ncols=2, figsize=(12, 4), tight_layout=True)
 
-        plt.sca(ax_right)
-        plt.plot(
-            (after.mean - before.mean).squeeze(),
-            color='black',
-        )
-        plt.axhline(
-            bias,
-            color='red', linestyle='solid', linewidth=2,
-        )
-        plt.text(
-            0.05/2, 0.95,
-            '\n'.join([
-                '{started_at} / {finished_at}'.format(
-                    started_at=datetime.strftime(datetime.fromtimestamp(before.started_at), '%Y-%m-%d %H:%M:%S'),
-                    finished_at=datetime.strftime(datetime.fromtimestamp(after.started_at), '%H:%M:%S'),
-                ),
-                'duration: {value}'.format(
-                    value=datetime.strftime(datetime.utcfromtimestamp(duration), '%H:%M:%S'),
-                ),
-                'bias: {value:.2f} [%/h]'.format(
-                    value=bias * (3600 / duration),
-                ),
-            ]),
-            color='red',
-            transform=ax_right.transAxes,
-            ha='left', va='top',
-        )
-        plt.xlabel(r'number')
-        plt.ylabel(r'$\Delta U$')
-        plt.grid(color='grey', linestyle=':')
+                plt.sca(ax_left)
+                plt.plot(
+                    before.average.squeeze(),
+                    linestyle='none', marker='.', markersize=2,
+                    label='before',
+                )
+                plt.plot(
+                    after.average.squeeze(),
+                    linestyle='none', marker='.', markersize=2,
+                    label='after',
+                )
+                plt.xlabel(r'number')
+                plt.ylabel(r'$U$')
+                plt.grid(color='grey', linestyle=':')
+                plt.legend()
 
-        plt.show()
+                plt.sca(ax_right)
+                plt.plot(
+                    (after.average - before.average).squeeze(),
+                    linestyle='none', marker='.', markersize=2,
+                    color='black',
+                )
+                plt.axhline(
+                    bias,
+                    color='red', linestyle='solid', linewidth=2,
+                )
+                plt.text(
+                    0.05/2, 0.95,
+                    '\n'.join([
+                        '{started_at} / {finished_at}'.format(
+                            started_at=datetime.strftime(datetime.fromtimestamp(before.started_at), '%Y-%m-%d %H:%M:%S'),
+                            finished_at=datetime.strftime(datetime.fromtimestamp(after.started_at), '%H:%M:%S'),
+                        ),
+                        'duration: {value}'.format(
+                            value=datetime.strftime(datetime.utcfromtimestamp(duration), '%H:%M:%S'),
+                        ),
+                        'bias: {value:.2f} [%/h]'.format(
+                            value=bias * (3600 / duration),
+                        ),
+                    ]),
+                    color='red',
+                    transform=ax_right.transAxes,
+                    ha='left', va='top',
+                )
+                plt.xlabel(r'number')
+                plt.ylabel(r'$\Delta U$')
+                plt.grid(color='grey', linestyle=':')
 
-        return experiment
+                plt.show()
 
-    return wrapper
+            return experiment
+
+        return wrapper
+
+    return inner
 
 
 def check_total(func: Callable) -> Callable:
     """Check an estimation of experiment's total time."""
 
+    @wraps(func)
     def wrapper(device: Device, config: ExperimentConfig, params: Sequence[tuple[int, Array[MilliSecond]]], *args, **kwargs):
         if config.check_total_flag is False:
             return func(device, config, params, *args, **kwargs)
@@ -104,7 +116,7 @@ def check_total(func: Callable) -> Callable:
             total += (n_frames + 1) * np.sum(exposure)  # FIXME: +1 frame
 
         n_exposures = sum([len(exposure) for n_frames, exposure in params])
-        total += device._change_exposure_delay * n_exposures
+        total += device.config.change_exposure_delay * n_exposures
 
         total = total/1e+3
 
@@ -125,22 +137,17 @@ def check_total(func: Callable) -> Callable:
 
 
 def check_exposure(func: Callable) -> Callable:
-    """Check an exposure."""
+    """Check an exposure time."""
 
+    @wraps(func)
     def wrapper(device: Device, config: ExperimentConfig, params: Sequence[tuple[int, Array[MilliSecond]]], *args, **kwargs):
         if config.check_exposure_flag is False:
             return func(device, config, params, *args, **kwargs)
 
-        # calculate exposure_max
-        exposure_min = min([min(exposure) for _, exposure in params])
-        exposure_max = max([max(exposure) for _, exposure in params])
-
-        #
-        if exposure_min < config.check_exposure_min:
+        if min([min(exposure) for _, exposure in params]) < config.check_exposure_min:
             raise ValueError('Check a min exposure or change `check_exposure_min`!')
-        if exposure_max > config.check_exposure_max:
+        if max([max(exposure) for _, exposure in params]) > config.check_exposure_max:
             raise ValueError('Check a max exposure or change `check_exposure_max`!')
-
         return func(device, config, params, *args, **kwargs)
 
     return wrapper
@@ -148,8 +155,14 @@ def check_exposure(func: Callable) -> Callable:
 
 @check_exposure
 @check_total
-@check_source
-def run_experiment(device: Device, config: ExperimentConfig, params: Sequence[tuple[int, Sequence[MilliSecond]]], label: str | None = None, force: bool = False) -> None:
+@check_source(show=True)
+def run_experiment(
+    device: Device,
+    config: ExperimentConfig,
+    params: Sequence[tuple[int, Sequence[MilliSecond]]],
+    label: str | None = None,
+    force: bool = False,
+) -> None:
     """Run experiment with given params"""
 
     if label is None:
@@ -161,14 +174,16 @@ def run_experiment(device: Device, config: ExperimentConfig, params: Sequence[tu
     if force or not os.path.isfile(filepath):
 
         # read
-        data = Data([], units=device.storage.units, label=label)
+        data = []
         for n_frames, exposure in params:
-            dat = read_data(
-                device,
+            _data = read_data(
+                device=device,
                 exposure=exposure,
                 n_frames=n_frames,
+                verbose=True,
             )
-            data.add(dat.data)
+            data.append(_data)
+        data = Data.create(tuple(itertools.chain(*data)), label=label)
 
         # save
         data.save()

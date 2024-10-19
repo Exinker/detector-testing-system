@@ -8,6 +8,7 @@ import numpy as np
 from vmk_spectrum3_wrapper.types import Array, MilliSecond
 
 from detector_testing_system.experiment import Data, EmptyArrayError, load_data
+from detector_testing_system.experiment.utils import create_directory
 from detector_testing_system.output import Output
 
 
@@ -95,10 +96,7 @@ def calculate_nonlinearity(
         plt.ylabel(r'$error$ [%]')
         plt.grid(color='grey', linestyle=':')
 
-        filedir = os.path.join('.', 'img', output.label)
-        if not os.path.isdir(filedir):
-            os.mkdir(filedir)
-
+        filedir = create_directory(os.path.join('.', 'img'), label=output.label)
         filepath = os.path.join(filedir, f'nonlinearity ({output.n}).png')
         plt.savefig(filepath)
 
@@ -198,9 +196,7 @@ def compare_nonlinearity(
         plt.grid(color='grey', linestyle=':')
         plt.legend()
 
-    filedir = os.path.join('.', 'img')
-    if not os.path.isdir(filedir):
-        os.mkdir(filedir)
+    filedir = create_directory(os.path.join('.', 'img'), label=output.label)
     filepath = os.path.join(filedir, f'nonlinearities ({n}).png')
     plt.savefig(filepath)
 

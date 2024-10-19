@@ -6,6 +6,7 @@ import numpy as np
 
 from vmk_spectrum3_wrapper.types import Array
 
+from detector_testing_system.experiment.utils import create_directory
 from detector_testing_system.output import Output
 
 
@@ -59,9 +60,7 @@ def calculate_gradient(
         plt.ylabel(r'$dU / d\tau$')
         plt.grid(color='grey', linestyle=':')
 
-        filedir = os.path.join('.', 'img', output.label)
-        if not os.path.isdir(filedir):
-            os.mkdir(filedir)
+        filedir = create_directory(os.path.join('.', 'img'), label=output.label)
         filepath = os.path.join(filedir, f'gradient ({output.n}).png')
         plt.savefig(filepath)
 

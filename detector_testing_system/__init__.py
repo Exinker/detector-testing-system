@@ -1,3 +1,8 @@
+from detector_testing_system.loggers import setdefault_logger
+
+setdefault_logger()
+
+
 __version__ = '0.0.2'
 
 

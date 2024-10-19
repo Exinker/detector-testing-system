@@ -1,5 +1,5 @@
-import os
 from collections.abc import Sequence
+import os
 import pickle
 import reprlib
 from typing import Any, Mapping
@@ -9,25 +9,16 @@ import numpy as np
 from tqdm.notebook import tqdm
 
 from vmk_spectrum3_wrapper import VERSION
-from vmk_spectrum3_wrapper.data import Data as Dat
+from vmk_spectrum3_wrapper.data import Data as Raw
 from vmk_spectrum3_wrapper.device import Device
+from vmk_spectrum3_wrapper.measurement_manager.filters import ScaleFilter, PipeFilter
 from vmk_spectrum3_wrapper.types import Array, MilliSecond
 from vmk_spectrum3_wrapper.units import U, Units
 
-
-def _datum_factory(__dat: Dat) -> 'Data':
-
-    return Datum(
-        intensity=__dat.intensity,
-        exposure=__dat.meta.exposure,
-        n_frames=__dat.meta.capacity,
-        started_at=__dat.meta.started_at,
-        units=__dat.units,
-    )
+from detector_testing_system.experiment.utils import create_directory
 
 
 class Datum:
-    create = _datum_factory
 
     def __init__(
         self,
@@ -36,7 +27,7 @@ class Datum:
         n_frames: int,
         started_at: float,
         units: Units,
-    ):
+    ) -> None:
         self.intensity = intensity
         self.exposure = exposure
         self.n_frames = n_frames
@@ -99,6 +90,17 @@ class Datum:
         }
 
     @classmethod
+    def create(cls, __raw: Raw) -> 'Datum':
+
+        return cls(
+            intensity=__raw.intensity,
+            exposure=__raw.meta.exposure,
+            n_frames=__raw.meta.capacity,
+            started_at=__raw.meta.started_at,
+            units=__raw.units,
+        )
+
+    @classmethod
     def loads(cls, dat: Mapping[str, Any]) -> 'Datum':
 
         units = {
@@ -121,29 +123,13 @@ class Datum:
         return f'{cls.__name__}({self.label})'
 
 
-def _validate_data(__data: Sequence[Datum]) -> bool:
-
-    if len(set(datum.units for datum in __data)) > 1:
-        return False
-    if len(set(datum.n_numbers for datum in __data)) > 1:
-        return False
-
-    return True
-
-
-def _data_factory(__data: Sequence[Datum], label: str = '') -> 'Data':
-    assert _validate_data(__data), 'Data validation is failed!'
-
-    return Data(
-        __data,
-        label=label,
-    )
-
-
 class Data:
-    create = _data_factory
 
-    def __init__(self, __data: Sequence[Datum], label: str = ''):
+    def __init__(
+        self,
+        __data: Sequence[Datum],
+        label: str = '',
+    ) -> None:
         self.data = tuple(__data)
         self.label = label
 
@@ -220,25 +206,36 @@ class Data:
         plt.legend().set_visible(legend)
 
         if save:
-            filedir = os.path.join('.', 'img', self.label)
-            if not os.path.isdir(filedir):
-                os.mkdir(filedir)
-
+            filedir = create_directory(os.path.join('.', 'img'), label=self.label)
             filepath = os.path.join(filedir, 'data.png')
             plt.savefig(filepath)
- 
+
         plt.show()
 
     def save(self) -> None:
-        """Save data to `./data//<label>/data.pkl` file."""
+        """Save data to `./data/<label>/data.pkl` file."""
 
-        filedir = os.path.join('.', 'data', self.label)
-        if not os.path.isdir(filedir):
-            os.mkdir(filedir)
-
+        filedir = create_directory(os.path.join('.', 'data'), label=self.label)
         filepath = os.path.join(filedir, 'data.pkl')
         with open(filepath, 'wb') as file:
             pickle.dump(self.dumps(), file)
+
+    def dumps(self) -> Mapping[str, Any]:
+
+        dat = {
+            'version': VERSION,
+            'data': tuple([datum.dumps() for datum in self.data]),
+            'units': str(self.units),
+            'label': str(self.label),
+        }
+        return dat
+
+    @classmethod
+    def create(cls, __data: Sequence[Datum], label: str = '') -> 'Data':
+        assert len(set(datum.units for datum in __data)) == 1, 'Data units have to be the same!'
+        assert len(set(datum.n_numbers for datum in __data)) == 1, 'Data shapes have to be the same!'
+
+        return Data(__data, label=label)
 
     @classmethod
     def load(cls, label: str) -> 'Data':
@@ -251,16 +248,6 @@ class Data:
 
         data = cls.loads(dat, label=label)
         return data
-
-    def dumps(self) -> Mapping[str, Any]:
-
-        dat = {
-            'version': VERSION,
-            'data': tuple([datum.dumps() for datum in self.data]),
-            'units': str(self.units),
-            'label': str(self.label),
-        }
-        return dat
 
     @classmethod
     def loads(cls, dat: Mapping[str, Any], label: str) -> 'Data':
@@ -285,13 +272,17 @@ def read_data(device: Device, exposure: Sequence[MilliSecond], n_frames: int, ve
     data = []
     for tau in tqdm(exposure, disable=not verbose):
         device.setup(
-            n_times=n_frames,
-            exposure=tau,
-            capacity=1,
+            n_times=1,
+            exposure=float(tau),
+            capacity=n_frames,
+            filter=PipeFilter(filters=[
+                ScaleFilter(units=Units.percent),
+            ]),
         )
 
-        dat = device.read()
-        data.append(Datum.create(dat))
+        raw = device.read()
+        datum = Datum.create(raw)
+        data.append(datum)
 
     return Data.create(data)
 
