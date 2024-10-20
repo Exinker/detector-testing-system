@@ -9,9 +9,14 @@ import numpy as np
 from tqdm.notebook import tqdm
 
 from vmk_spectrum3_wrapper import VERSION
-from vmk_spectrum3_wrapper.data import Data as Raw
+from vmk_spectrum3_wrapper.config import DEFAULT_DETECTOR
+from vmk_spectrum3_wrapper.data import (
+    Data as RawData,
+    Datum as RawDatum,
+)
+from vmk_spectrum3_wrapper.detector import Detector
 from vmk_spectrum3_wrapper.device import Device
-from vmk_spectrum3_wrapper.measurement_manager.filters import ScaleFilter, PipeFilter
+from vmk_spectrum3_wrapper.measurement_manager.filters import ClipFilter, ScaleFilter, PipeFilter
 from vmk_spectrum3_wrapper.types import Array, MilliSecond
 from vmk_spectrum3_wrapper.units import U, Units
 
@@ -90,7 +95,7 @@ class Datum:
         }
 
     @classmethod
-    def create(cls, __raw: Raw) -> 'Datum':
+    def create(cls, __raw: RawData) -> 'Datum':
 
         return cls(
             intensity=__raw.intensity,
@@ -276,6 +281,7 @@ def read_data(device: Device, exposure: Sequence[MilliSecond], n_frames: int, ve
             exposure=float(tau),
             capacity=n_frames,
             filter=PipeFilter(filters=[
+                ClipFilter(),
                 ScaleFilter(units=Units.percent),
             ]),
         )
@@ -298,3 +304,22 @@ def load_data(label: str, show: bool = False) -> Data:
 
     #
     return data
+
+
+def split_data(data: Data, detector: Detector = DEFAULT_DETECTOR) -> tuple[Data]:
+    n_pixels = detector.config.n_pixels
+    assert data.n_numbers % n_pixels == 0, 'Invalid detector is selected!'
+
+    def select(datum: Datum, index: slice) -> Datum:
+        return Datum(
+            intensity=datum.intensity[:, index],
+            exposure=datum.exposure,
+            n_frames=datum.n_frames,
+            started_at=datum.started_at,
+            units=datum.units,
+        )
+
+    return tuple([
+        Data([select(datum, slice(n_pixels*(n), n_pixels*(n+1))) for datum in data.data], label=data.label)
+        for n in range(data.n_numbers // n_pixels)
+    ])
