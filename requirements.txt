@@ -8,4 +8,4 @@ tqdm==4.66.2
 jupyter==1.0.0
 
 # vmk_spectrum3-0.2.0-cp310-cp310-win_amd64.whl
-vmk_spectrum3_wrapper @ git+https://github.com/Exinker/vmk_spectrum3_wrapper@e030e7b7f1af9c3dc6befdc78aae233febb579fb
+# vmk_spectrum3_wrapper @ git+https://github.com/Exinker/vmk_spectrum3_wrapper
