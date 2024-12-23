@@ -95,14 +95,16 @@ def calculate_efficiency(
 def research_efficiency(
     data: Data,
     threshold: float | None = None,
+    mask: Array[bool] | None = None,
     verbose: bool = False,
     show: bool = False,
     bins: int | Sequence = 40,
 ) -> Array[float]:
     threshold = threshold or data.units.value_max
+    mask = np.full(data.n_numbers, True) if mask is None else mask
 
-    efficiency = np.zeros(data.n_numbers)
-    for n in range(data.n_numbers):
+    efficiency = np.full(data.n_numbers, np.nan)
+    for n, *_ in np.argwhere(mask):
         try:
             value = calculate_efficiency(
                 output=Output.create(data=data, n=n),
@@ -114,6 +116,9 @@ def research_efficiency(
 
             if verbose:
                 print(error)
+
+        except Exception as error:
+            print(error)
 
         finally:
             efficiency[n] = value
@@ -148,7 +153,7 @@ def research_efficiency(
             ha='left', va='top',
         )
         plt.hist(
-            efficiency,
+            efficiency[~np.isnan(efficiency)],
             bins=bins,
             edgecolor='black', facecolor='white',
             # fill=False,
@@ -162,7 +167,7 @@ def research_efficiency(
         plt.show()
 
     if show and False:  # deprecated functionality
-        values = efficiency.copy()
+        values = efficiency.copy()[~np.isnan(efficiency)]
         values = treat_outliers(values)
         values = normalize_values(values)
 
