@@ -1,5 +1,7 @@
 """Calculate an efficiency (factor to convert percents to electrons)."""
 
+from collections.abc import Sequence
+
 from distfit import distfit
 import matplotlib.pyplot as plt
 import numpy as np
@@ -9,7 +11,14 @@ from vmk_spectrum3_wrapper.types import Array
 from detector_testing_system.characteristic.bias import calculate_bias
 from detector_testing_system.experiment import Data, EmptyArrayError
 from detector_testing_system.output import Output
-from detector_testing_system.utils import calculate_stats, normalize_values, treat_outliers
+from detector_testing_system.utils import (
+    calculate_stats,
+    normalize_values,
+    treat_outliers,
+)
+
+
+DEGREE = 1
 
 
 def calculate_efficiency(
@@ -20,7 +29,12 @@ def calculate_efficiency(
 ) -> float:
 
     mask = output.average < threshold
-    p = np.polyfit(output.average[mask], output.variance[mask], deg=1)
+    if len(np.argwhere(mask)) < DEGREE + 1:
+        raise EmptyArrayError(
+            message=f'Data don\'t enough to be fitted! Efficiency calculation was failed in cell {output.n}.',
+        )
+
+    p = np.polyfit(output.average[mask], output.variance[mask], deg=DEGREE)
     variance_hat = np.polyval(p, output.average)
 
     angle = p[0]
@@ -83,6 +97,7 @@ def research_efficiency(
     threshold: float | None = None,
     verbose: bool = False,
     show: bool = False,
+    bins: int | Sequence = 40,
 ) -> Array[float]:
     threshold = threshold or data.units.value_max
 
@@ -134,7 +149,7 @@ def research_efficiency(
         )
         plt.hist(
             efficiency,
-            bins=40,
+            bins=bins,
             edgecolor='black', facecolor='white',
             # fill=False,
         )
@@ -146,7 +161,7 @@ def research_efficiency(
 
         plt.show()
 
-    if show:
+    if show and False:  # deprecated functionality
         values = efficiency.copy()
         values = treat_outliers(values)
         values = normalize_values(values)

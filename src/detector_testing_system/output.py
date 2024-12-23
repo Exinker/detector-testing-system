@@ -31,7 +31,9 @@ class Output:
         cond = average < threshold
 
         if not np.any(cond):
-            raise EmptyArrayError(message=f'Data couldn\'t be converted! An array is empty for cell: {n}.')
+            raise EmptyArrayError(
+                message=f'Data couldn\'t be converted!  Calculation was failed in cell {n}.',
+            )
 
         return cls(
             average=average[cond],

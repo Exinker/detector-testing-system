@@ -8,6 +8,9 @@ from detector_testing_system.output import Output
 from detector_testing_system.utils import calculate_stats
 
 
+DEGREE = 1
+
+
 def calculate_dark_current(
     output: Output,
     threshold: float,
@@ -16,7 +19,12 @@ def calculate_dark_current(
     """Calculate a dark current of the cell."""
 
     mask = output.average < threshold
-    p = np.polyfit(output.exposure[mask], output.average[mask], deg=1)
+    if len(np.argwhere(mask)) < DEGREE + 1:
+        raise EmptyArrayError(
+            message=f'Data don\'t enough to be fitted! Dark current calculation was failed in cell {output.n}.',
+        )
+
+    p = np.polyfit(output.exposure[mask], output.average[mask], deg=DEGREE)
     current = 1e+3*p[0]  # in %/s
 
     u_hat = np.polyval(p, output.exposure)

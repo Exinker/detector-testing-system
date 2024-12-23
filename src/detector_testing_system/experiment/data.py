@@ -1,7 +1,7 @@
-from collections.abc import Sequence
 import os
 import pickle
 import reprlib
+from collections.abc import Sequence
 from typing import Any, Mapping
 
 import matplotlib.pyplot as plt
@@ -10,13 +10,14 @@ from tqdm.notebook import tqdm
 
 from vmk_spectrum3_wrapper import VERSION
 from vmk_spectrum3_wrapper.config import DEFAULT_DETECTOR
-from vmk_spectrum3_wrapper.data import (
-    Data as RawData,
-    Datum as RawDatum,
-)
+from vmk_spectrum3_wrapper.data import Data as RawData
 from vmk_spectrum3_wrapper.detector import Detector
 from vmk_spectrum3_wrapper.device import Device
-from vmk_spectrum3_wrapper.measurement_manager.filters import ClipFilter, ScaleFilter, PipeFilter
+from vmk_spectrum3_wrapper.measurement_manager.filters import (
+    ClipFilter,
+    PipeFilter,
+    ScaleFilter,
+)
 from vmk_spectrum3_wrapper.types import Array, MilliSecond
 from vmk_spectrum3_wrapper.units import U, Units
 
@@ -95,14 +96,15 @@ class Datum:
         }
 
     @classmethod
-    def create(cls, __raw: RawData) -> 'Datum':
+    def read(cls, device: Device) -> 'Datum':
 
+        raw = device.read()
         return cls(
-            intensity=__raw.intensity,
-            exposure=__raw.meta.exposure,
-            n_frames=__raw.meta.capacity,
-            started_at=__raw.meta.started_at,
-            units=__raw.units,
+            intensity=raw.intensity,
+            exposure=raw.meta.exposure,
+            n_frames=raw.meta.capacity,
+            started_at=raw.meta.started_at,
+            units=raw.units,
         )
 
     @classmethod
@@ -271,7 +273,12 @@ class Data:
         return f'{cls.__name__}({self.label})'
 
 
-def read_data(device: Device, exposure: Sequence[MilliSecond], n_frames: int, verbose: bool = True) -> Data:
+def read_data(
+    device: Device,
+    exposure: Sequence[MilliSecond],
+    n_frames: int,
+    verbose: bool = True,
+) -> Data:
     """Read data with a given sequence of `exposure` and `n_frames`."""
 
     data = []
@@ -286,29 +293,34 @@ def read_data(device: Device, exposure: Sequence[MilliSecond], n_frames: int, ve
             ]),
         )
 
-        raw = device.read()
-        datum = Datum.create(raw)
+        datum = Datum.read(
+            device=device,
+        )
         data.append(datum)
 
     return Data.create(data)
 
 
-def load_data(label: str, show: bool = False) -> Data:
+def load_data(
+    label: str,
+    show: bool = False,
+) -> Data:
     """Load data from `./data//<label>/data.pkl` file."""
 
     data = Data.load(label=label)
 
-    # show
     if show:
         data.show()
 
-    #
     return data
 
 
-def split_data(data: Data, detector: Detector = DEFAULT_DETECTOR) -> tuple[Data]:
+def split_data_by_detector(
+    __data: Data,
+    detector: Detector = DEFAULT_DETECTOR,
+) -> tuple[Data]:
     n_pixels = detector.config.n_pixels
-    assert data.n_numbers % n_pixels == 0, 'Invalid detector is selected!'
+    assert __data.n_numbers % n_pixels == 0, 'Invalid detector is selected!'
 
     def select(datum: Datum, index: slice) -> Datum:
         return Datum(
@@ -320,6 +332,6 @@ def split_data(data: Data, detector: Detector = DEFAULT_DETECTOR) -> tuple[Data]
         )
 
     return tuple([
-        Data([select(datum, slice(n_pixels*(n), n_pixels*(n+1))) for datum in data.data], label=data.label)
-        for n in range(data.n_numbers // n_pixels)
+        Data([select(datum, slice(n_pixels*(n), n_pixels*(n+1))) for datum in __data.data], label=__data.label)
+        for n in range(__data.n_numbers // n_pixels)
     ])
