@@ -323,21 +323,19 @@ dependencies = [
     { name = "python-dotenv" },
     { name = "scipy" },
     { name = "tqdm" },
-]
-
-[package.dev-dependencies]
-app = [
-    { name = "ipykernel" },
-    { name = "jupyter" },
     { name = "vmk-spectrum3" },
     { name = "vmk-spectrum3-wrapper" },
 ]
+
+[package.dev-dependencies]
 dev = [
     { name = "flake8" },
     { name = "flake8-bugbear" },
     { name = "flake8-builtins" },
     { name = "flake8-commas" },
     { name = "flake8-import-order" },
+    { name = "ipykernel" },
+    { name = "jupyter" },
     { name = "pep8-naming" },
     { name = "pytest" },
     { name = "pytest-cov" },
@@ -369,21 +367,19 @@ requires-dist = [
     { name = "python-dotenv", specifier = "==1.0.1" },
     { name = "scipy", specifier = "==1.12.0" },
     { name = "tqdm", specifier = "==4.66.2" },
-]
-
-[package.metadata.requires-dev]
-app = [
-    { name = "ipykernel", specifier = ">=6.29.5" },
-    { name = "jupyter", specifier = "==1.1.1" },
     { name = "vmk-spectrum3", path = "vmk_spectrum3-0.2.0-cp310-cp310-win_amd64.whl" },
     { name = "vmk-spectrum3-wrapper", git = "https://github.com/Exinker/vmk_spectrum3_wrapper?rev=develop" },
 ]
+
+[package.metadata.requires-dev]
 dev = [
     { name = "flake8" },
     { name = "flake8-bugbear" },
     { name = "flake8-builtins" },
     { name = "flake8-commas" },
     { name = "flake8-import-order" },
+    { name = "ipykernel", specifier = ">=6.29.5" },
+    { name = "jupyter", specifier = "==1.1.1" },
     { name = "pep8-naming" },
     { name = "pytest" },
     { name = "pytest-cov" },

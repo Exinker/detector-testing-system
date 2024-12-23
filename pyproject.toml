@@ -21,6 +21,8 @@ dependencies = [
     "python-dotenv==1.0.1",
     "scipy==1.12.0",
     "tqdm==4.66.2",
+    "vmk-spectrum3-wrapper",
+    "vmk-spectrum3",
 ]
 requires-python = "==3.10.*"
 
@@ -38,18 +40,14 @@ testing = [
     "pytest-cov",
     "pytest-flake8",
 ]
-dev = [
-    {include-group = "linting"},
-    {include-group = "testing"},
-]
 notebook = [
     "ipykernel>=6.29.5",
     "jupyter==1.1.1",
 ]
-app = [
+dev = [
+    {include-group = "linting"},
+    {include-group = "testing"},
     {include-group = "notebook"},
-    "vmk-spectrum3-wrapper",
-    "vmk-spectrum3",
 ]
 
 [tool.uv.sources]
