@@ -7,11 +7,14 @@ from vmk_spectrum3_wrapper.units import Units
 
 @dataclass
 class ExperimentConfig:
+
     device_id: str
     device_ip: str
     device_units: Units
 
     detector: str
+
+    timeout: float
 
     check_exposure_flag: bool
     check_exposure_min: MilliSecond
@@ -37,6 +40,8 @@ class ExperimentConfig:
             device_units=parser.get('device', 'units'),
 
             detector=parser.get('detector', 'type'),
+
+            timeout=parser.get('experiment', 'timeout'),
 
             check_exposure_flag={
                 'False': False,

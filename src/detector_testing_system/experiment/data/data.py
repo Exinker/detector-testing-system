@@ -1,6 +1,7 @@
 import os
 import pickle
 import reprlib
+import time
 from collections.abc import Sequence
 from typing import Any, Mapping
 
@@ -274,6 +275,7 @@ def read_data(
     device: Device,
     exposure: Sequence[MilliSecond],
     n_frames: int,
+    timeout: float = 0,
     verbose: bool = True,
 ) -> Data:
     """Read data with a given sequence of `exposure` and `n_frames`."""
@@ -289,6 +291,7 @@ def read_data(
                 ScaleFilter(units=Units.percent),
             ]),
         )
+        time.sleep(timeout)
 
         datum = Datum.read(
             device=device,
