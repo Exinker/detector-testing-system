@@ -19,6 +19,8 @@ def calculate_gradient(
     """Calculate gradient."""
     u_grad = np.gradient(output.average, output.exposure)
 
+    p = np.polyfit(output.exposure, output.average, deg=1)
+
     if show:
         fig, (ax_left, ax_right) = plt.subplots(nrows=1, ncols=2, figsize=(12, 4))
 
@@ -29,9 +31,18 @@ def calculate_gradient(
             label=r'$U$',
         )
         plt.plot(
-            output.exposure, np.polyval(np.polyfit(output.exposure, output.average, deg=1), output.exposure),
+            output.exposure, np.polyval(p, output.exposure),
             color='black', linestyle='solid', linewidth=1,
             label=r'$\hat{U}$',
+        )
+        ax_left.text(
+            0.95, 0.05/2,
+            '\n'.join([
+                fr'$a = {{{p[0]:.4f}}}$',
+                fr'$b = {{{p[1]:.4f}}}$',
+            ]),
+            transform=plt.gca().transAxes,
+            ha='right', va='bottom',
         )
         plt.xlabel(r'$\tau$ [ms]')
         plt.ylabel(r'$U$ {units}'.format(units=output.units.label))
