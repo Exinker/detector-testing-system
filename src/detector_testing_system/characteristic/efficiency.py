@@ -23,12 +23,13 @@ DEGREE = 1
 
 def calculate_efficiency(
     output: Output,
-    threshold: float,
+    threshold: tuple[float, float],
     verbose: bool = False,
     show: bool = False,
 ) -> float:
 
-    mask = output.average < threshold
+    lb, ub = threshold
+    mask = (lb < output.average) & (output.average < ub)
     if len(np.argwhere(mask)) < DEGREE + 1:
         raise EmptyArrayError(
             message=f'Data don\'t enough to be fitted! Efficiency calculation was failed in cell {output.n}.',
@@ -94,13 +95,13 @@ def calculate_efficiency(
 
 def research_efficiency(
     data: Data,
-    threshold: float | None = None,
+    threshold: tuple[float, float] | None = None,
     mask: Array[bool] | None = None,
     verbose: bool = False,
     show: bool = False,
     bins: int | Sequence = 40,
 ) -> Array[float]:
-    threshold = threshold or data.units.value_max
+    threshold = threshold or (0, data.units.value_max)
     mask = np.full(data.n_numbers, True) if mask is None else mask
 
     efficiency = np.full(data.n_numbers, np.nan)

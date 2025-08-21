@@ -9,9 +9,6 @@ import numpy as np
 from tqdm.notebook import tqdm
 
 from vmk_spectrum3_wrapper import VERSION
-from vmk_spectrum3_wrapper.config import DEFAULT_DETECTOR
-from vmk_spectrum3_wrapper.data import Data as RawData
-from vmk_spectrum3_wrapper.detector import Detector
 from vmk_spectrum3_wrapper.device import Device
 from vmk_spectrum3_wrapper.measurement_manager.filters import (
     ClipFilter,
@@ -313,25 +310,3 @@ def load_data(
         data.show()
 
     return data
-
-
-def split_data_by_detector(
-    __data: Data,
-    detector: Detector = DEFAULT_DETECTOR,
-) -> tuple[Data]:
-    n_pixels = detector.config.n_pixels
-    assert __data.n_numbers % n_pixels == 0, 'Invalid detector is selected!'
-
-    def select(datum: Datum, index: slice) -> Datum:
-        return Datum(
-            intensity=datum.intensity[:, index],
-            exposure=datum.exposure,
-            n_frames=datum.n_frames,
-            started_at=datum.started_at,
-            units=datum.units,
-        )
-
-    return tuple([
-        Data([select(datum, slice(n_pixels*(n), n_pixels*(n+1))) for datum in __data.data], label=__data.label)
-        for n in range(__data.n_numbers // n_pixels)
-    ])

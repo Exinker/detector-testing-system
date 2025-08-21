@@ -13,12 +13,13 @@ DEGREE = 1
 
 def calculate_bias(
     output: Output,
-    threshold: float,
+    threshold: tuple[float, float],
     show: bool = False,
 ) -> float:
     """Calculate a bias of the cell."""
 
-    mask = output.average < threshold
+    lb, ub = threshold
+    mask = (lb < output.average) & (output.average < ub)
     if len(np.argwhere(mask)) < DEGREE + 1:
         raise EmptyArrayError(
             message=f'Data don\'t enough to be fitted! Bias calculation was failed in cell {output.n}.',
@@ -74,13 +75,13 @@ def calculate_bias(
 
 def research_bias(
     data: Data,
-    threshold: float | None = None,
+    threshold: tuple[float, float] | None = None,
     confidence: float = .95,
     verbose: bool = False,
     show: bool = False,
 ) -> Array[float]:
     """Calculate a bias of the cells."""
-    threshold = threshold or data.units.value_max
+    threshold = threshold or (0, data.units.value_max)
 
     bias = np.zeros(data.n_numbers)
     for n in range(data.n_numbers):

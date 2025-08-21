@@ -1,6 +1,7 @@
 from .config import ExperimentConfig
 from .data import (
     Data,
+    create_mask,
     load_data,
     read_data,
     split_data_by_detector,

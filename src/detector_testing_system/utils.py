@@ -9,14 +9,12 @@ def calculate_stats(__values: Array[float], confidence: float = .99) -> tuple[fl
     """Calculate mean and confidence interval."""
     __values = __values[~np.isnan(__values)]
 
-    #
     n = len(__values)
 
     mean = np.mean(__values)
     se = stats.sem(__values)
     ci = se * stats.t.ppf((1 + confidence) / 2., n - 1)
 
-    #
     return mean, ci
 
 
@@ -24,7 +22,6 @@ def treat_outliers(values: Array[float], coeff: float = 5) -> Array[float]:
     """Treat outliers by coeff."""
     values = values[~np.isnan(values)]
 
-    #
     mean = np.mean(values)
     interval = coeff * np.std(values, ddof=1)
 
