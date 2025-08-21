@@ -41,7 +41,7 @@ class ExperimentConfig:
 
             detector=parser.get('detector', 'type'),
 
-            timeout=parser.get('experiment', 'timeout'),
+            timeout=float(parser.get('experiment', 'timeout')),
 
             check_exposure_flag={
                 'False': False,
