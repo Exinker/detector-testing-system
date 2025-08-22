@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "detector-testing-system"
-version = "0.1.0"
+version = "1.0.0"
 description = "`Detector Testing System` is a library for testing of the basic parameters of detectors."
 authors = [
     {name = "Pavel Vaschenko", email="vaschenko@vmk.ru"},
