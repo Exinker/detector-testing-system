@@ -71,15 +71,17 @@ def calculate_dark_current(
 def research_dark_current(
     data: Data,
     threshold: tuple[float, float] | None = None,
+    mask: Array[bool] | None = None,
     confidence: float = .95,
     verbose: bool = False,
     show: bool = False,
 ) -> Array[float]:
     """Calculate a dark current of the cells."""
     threshold = threshold or (0, data.units.value_max)
+    mask = np.full(data.n_numbers, True) if mask is None else mask
 
-    current = np.zeros(data.n_numbers)
-    for n in range(data.n_numbers):
+    current = np.full(data.n_numbers, np.nan)
+    for n, *_ in np.argwhere(mask):
         try:
             value = calculate_dark_current(
                 output=Output.create(data=data, n=n),

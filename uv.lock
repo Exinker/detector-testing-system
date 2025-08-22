@@ -1,4 +1,5 @@
 version = 1
+revision = 1
 requires-python = "==3.10.*"
 
 [[package]]
@@ -368,7 +369,7 @@ requires-dist = [
     { name = "scipy", specifier = "==1.12.0" },
     { name = "tqdm", specifier = "==4.66.2" },
     { name = "vmk-spectrum3", path = "vmk_spectrum3-0.2.0-cp310-cp310-win_amd64.whl" },
-    { name = "vmk-spectrum3-wrapper", git = "https://github.com/Exinker/vmk_spectrum3_wrapper?rev=develop" },
+    { name = "vmk-spectrum3-wrapper", git = "https://github.com/Exinker/vmk_spectrum3_wrapper?rev=0.4.0" },
 ]
 
 [package.metadata.requires-dev]
@@ -600,7 +601,7 @@ name = "ipykernel"
 version = "6.29.5"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "appnope", marker = "platform_system == 'Darwin'" },
+    { name = "appnope", marker = "sys_platform == 'darwin'" },
     { name = "comm" },
     { name = "debugpy" },
     { name = "ipython" },
@@ -1799,7 +1800,7 @@ name = "tqdm"
 version = "4.66.2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "colorama", marker = "platform_system == 'Windows'" },
+    { name = "colorama", marker = "sys_platform == 'win32'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/ea/85/3ce0f9f7d3f596e7ea57f4e5ce8c18cb44e4a9daa58ddb46ee0d13d6bff8/tqdm-4.66.2.tar.gz", hash = "sha256:6cd52cdf0fef0e0f543299cfc96fec90d7b8a7e88745f411ec33eb44d5ed3531", size = 169462 }
 wheels = [
@@ -1876,11 +1877,12 @@ requires-dist = [
     { name = "numpy" },
     { name = "pytest", marker = "extra == 'test'", specifier = ">=6.0" },
 ]
+provides-extras = ["test"]
 
 [[package]]
 name = "vmk-spectrum3-wrapper"
-version = "0.3.0"
-source = { git = "https://github.com/Exinker/vmk_spectrum3_wrapper?rev=develop#05b5f681eb254aa369417c36e4e8835fb8806569" }
+version = "0.4.0"
+source = { git = "https://github.com/Exinker/vmk_spectrum3_wrapper?rev=0.4.0#3d0b8b60138df462c48b643a84db04016beb8dc2" }
 dependencies = [
     { name = "matplotlib" },
     { name = "numpy" },

@@ -107,12 +107,14 @@ def calculate_nonlinearity(
 
 def research_nonlinearity(
     data: Data,
+    mask: Array[bool] | None = None,
     verbose: bool = False,
     show: bool = False,
 ) -> Array[float]:
+    mask = np.full(data.n_numbers, True) if mask is None else mask
 
-    alpha = np.zeros(data.n_numbers)
-    for n in range(data.n_numbers):
+    alpha = np.full(data.n_numbers, np.nan)
+    for n, *_ in np.argwhere(mask):
         try:
             _, value = calculate_nonlinearity(
                 output=Output.create(data=data, n=n),
