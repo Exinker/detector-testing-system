@@ -14,8 +14,6 @@ class ExperimentConfig:
 
     detector: str
 
-    timeout: float
-
     check_exposure_flag: bool
     check_exposure_min: MilliSecond
     check_exposure_max: MilliSecond
@@ -40,8 +38,6 @@ class ExperimentConfig:
             device_units=parser.get('device', 'units'),
 
             detector=parser.get('detector', 'type'),
-
-            timeout=float(parser.get('experiment', 'timeout')),
 
             check_exposure_flag={
                 'False': False,

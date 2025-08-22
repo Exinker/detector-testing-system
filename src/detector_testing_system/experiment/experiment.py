@@ -170,7 +170,6 @@ def run_experiment(
                 device=device,
                 exposure=exposure,
                 n_frames=n_frames,
-                timeout=config.timeout,
                 verbose=True,
             )
             data.append(_data)
