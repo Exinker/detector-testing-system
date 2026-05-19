@@ -26,7 +26,7 @@ def calculate_dark_current(
         )
 
     p = np.polyfit(output.exposure[mask], output.average[mask], deg=DEGREE)
-    current = 1e+3*p[0]  # in %/s
+    dark_current = 1e+3*p[0]  # in %/s
 
     u_hat = np.polyval(p, output.exposure)
 
@@ -51,8 +51,8 @@ def calculate_dark_current(
                 r'$n$: {n:.0f}'.format(
                     n=output.n,
                 ),
-                r'$i$: {value:.4f} {units}'.format(
-                    value=current,
+                r'$i$: {dark_current:.4f} {units}'.format(
+                    dark_current=dark_current,
                     units=f'[{output.units.label}/s]',
                 ),
             ]),
@@ -65,7 +65,7 @@ def calculate_dark_current(
 
         plt.show()
 
-    return current
+    return dark_current
 
 
 def research_dark_current(
@@ -80,7 +80,7 @@ def research_dark_current(
     threshold = threshold or (0, data.units.value_max)
     mask = np.full(data.n_numbers, True) if mask is None else mask
 
-    current = np.full(data.n_numbers, np.nan)
+    dark_current = np.full(data.n_numbers, np.nan)
     for n, *_ in np.argwhere(mask):
         try:
             value = calculate_dark_current(
@@ -95,15 +95,15 @@ def research_dark_current(
                 print(error)
 
         finally:
-            current[n] = value
+            dark_current[n] = value
 
     if show:
-        mean, ci = calculate_stats(current, confidence=confidence)
+        mean, ci = calculate_stats(dark_current, confidence=confidence)
 
         fig, ax = plt.subplots(figsize=(6, 4), tight_layout=True)
 
         plt.scatter(
-            range(data.n_numbers), current,
+            range(data.n_numbers), dark_current,
             c='black', s=2,
         )
         plt.text(
@@ -125,4 +125,4 @@ def research_dark_current(
 
         plt.show()
 
-    return current
+    return dark_current

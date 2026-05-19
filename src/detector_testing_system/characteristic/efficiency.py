@@ -70,15 +70,15 @@ def calculate_efficiency(
         plt.text(
             0.05/2, 0.95,
             '\n'.join([
-                r'$U_{{b}}$: {value:.4f} {units}'.format(
-                    value=bias,
+                r'$U_{{b}}$: {bias:.4f} {units}'.format(
+                    bias=bias,
                     units=output.units.label,
                 ),
-                r'$k$: {value:.0f} [$e^-/\%$]'.format(
-                    value=np.round(efficiency, 0),
+                r'$k$: {efficiency:.0f} [$e^-/\%$]'.format(
+                    efficiency=np.round(efficiency, 0),
                 ),
-                r'$c$: {value:.0f} [$e^-$]'.format(
-                    value=np.round(efficiency, 0) * output.units.value_max,
+                r'$c$: {efficiency:.0f} [$e^-$]'.format(
+                    efficiency=np.round(efficiency, 0) * output.units.value_max,
                 ),
             ]),
             transform=ax.transAxes,

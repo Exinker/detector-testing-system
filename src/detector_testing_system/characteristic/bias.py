@@ -56,8 +56,8 @@ def calculate_bias(
                 r'$n$: {n:.0f}'.format(
                     n=output.n,
                 ),
-                r'$U_{{b}}$: {value:.4f} {units}'.format(
-                    value=bias,
+                r'$U_{{b}}$: {bias:.4f} {units}'.format(
+                    bias=bias,
                     units=output.units.label,
                 ),
             ]),
