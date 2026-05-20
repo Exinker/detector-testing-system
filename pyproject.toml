@@ -36,6 +36,7 @@ linting = [
     "pep8-naming",
 ]
 testing = [
+    "Faker",
     "pytest",
     "pytest-cov",
     "pytest-flake8",
