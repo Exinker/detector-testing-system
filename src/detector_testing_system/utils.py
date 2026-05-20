@@ -6,7 +6,7 @@ from vmk_spectrum3_wrapper.types import Array
 
 
 def calculate_stats(__values: Array[float], confidence: float = .99) -> tuple[float, float]:
-    """Calculate mean and confidence interval."""
+    """Calculate mean and confidence interval"""
     __values = __values[~np.isnan(__values)]
 
     n = len(__values)
@@ -18,19 +18,32 @@ def calculate_stats(__values: Array[float], confidence: float = .99) -> tuple[fl
     return mean, ci
 
 
-def treat_outliers(values: Array[float], coeff: float = 5) -> Array[float]:
-    """Treat outliers by coeff."""
-    values = values[~np.isnan(values)]
+def calculate_bounds(
+    __values: Array[float],
+    q: tuple[int, int] = (25, 75),
+    k: float = 1.5,
+) -> tuple[float, float]:
 
-    mean = np.mean(values)
-    interval = coeff * np.std(values, ddof=1)
+    q1, q3 = np.nanpercentile(__values, sorted(q))
+    iqr = q3 - q1
 
-    mask = (values >= mean - interval) & (values <= mean + interval)
-    return values[mask]
+    lb = q1 - k * iqr
+    ub = q3 + k * iqr
+    return tuple([lb, ub])
+
+
+def trunk_outliers(
+    __values: Array[float],
+    bounds: tuple[float, float],
+) -> Array[float]:
+    lb, ub = bounds
+
+    mask = (__values >= lb) & (__values <= ub)
+    return __values[mask]
 
 
 def normalize_values(values: Array[float]) -> Array[float]:
-    """Normalize values."""
+    """Normalize values"""
 
     mean = np.mean(values)
     std = np.std(values, ddof=1)

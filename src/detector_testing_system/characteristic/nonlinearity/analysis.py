@@ -1,23 +1,26 @@
 import os
-from collections.abc import Sequence
 import reprlib
+from collections.abc import Sequence
 
 import matplotlib.pyplot as plt
 import numpy as np
 
 from vmk_spectrum3_wrapper.types import Array
 
+from detector_testing_system.characteristic.dark_current.models import (
+    BaseDarkCurrentModel,
+    DarkCurrentModelABC,
+)
 from detector_testing_system.characteristic.nonlinearity.calculators import calculate_nonlinearity
 from detector_testing_system.experiment import Data, EmptyArrayError, load_data
 from detector_testing_system.experiment.utils import create_directory
-from detector_testing_system.output import Output
-from detector_testing_system.utils import calculate_stats
+from detector_testing_system.trace import Trace
 
 
 def research_nonlinearity(
     data: Data,
+    model: DarkCurrentModelABC | None = None,
     mask: Array[bool] | None = None,
-    method: str = 'fit',
     verbose: bool = False,
     show: bool = False,
     bins: int | Sequence = 40,
@@ -29,24 +32,19 @@ def research_nonlinearity(
     for n, *_ in np.argwhere(mask):
         try:
             _, value = calculate_nonlinearity(
-                output=Output.create(data=data, n=n),
-                method=method,
+                trace=Trace.create(data=data, n=n),
+                model=model,
                 **kwargs,
             )
-
         except EmptyArrayError as error:
             value = float(np.nan)
 
             if verbose:
                 print(error)
-
         finally:
             nonlinearity[n] = value
 
     if show:
-        mean, ci = calculate_stats(nonlinearity)
-
-        #
         fig, (ax_left, ax_right) = plt.subplots(nrows=1, ncols=2, figsize=(12, 4))
 
         plt.sca(ax_left)
@@ -54,7 +52,9 @@ def research_nonlinearity(
             0.05/2, 0.95,
             '\n'.join([
                 reprlib.repr(data.label),
-                fr'method: {method}',
+                'method: {method}'.format(
+                    method=getattr(model, 'name', 'base'),
+                ),
             ]),
             transform=ax_left.transAxes,
             ha='left', va='top',
@@ -66,20 +66,12 @@ def research_nonlinearity(
         )
         plt.xlabel(r'number')
         plt.ylabel({
-            'fit': r'$\alpha$ [%]',
-            'jnorm': r'span [%]',
-        }[method])
+            'base': r'$\alpha$ [%]',
+            'jnorm': r'$\Delta U$ [%]',
+        }[getattr(model, 'name', 'base')])
         plt.grid(color='grey', linestyle=':')
 
         plt.sca(ax_right)
-        plt.text(
-            0.05/2, 0.95,
-            '\n'.join([
-                fr'$k: {np.round(mean, 0):.0f} \pm {np.round(ci, 0):.0f}$',
-            ]),
-            transform=ax_right.transAxes,
-            ha='left', va='top',
-        )
         plt.hist(
             nonlinearity[~np.isnan(nonlinearity)],
             bins=bins,
@@ -87,9 +79,9 @@ def research_nonlinearity(
             # fill=False,
         )
         plt.xlabel({
-            'fit': r'$\alpha$ [%]',
-            'jnorm': r'span [%]',
-        }[method])
+            'base': r'$\alpha$ [%]',
+            'jnorm': r'$\Delta U$ [%]',
+        }[getattr(model, 'name', 'base')])
 
         plt.show()
 
@@ -99,11 +91,12 @@ def research_nonlinearity(
 def compare_nonlinearity(
     labels: Sequence[str],
     n: int,
-    method: str = 'fit',
+    model: DarkCurrentModelABC | None = None,
     xlim: tuple[float, float] = None,
     ylim: tuple[float, float] = None,
     **kwargs,
 ) -> None:
+    model = model or BaseDarkCurrentModel()
 
     fig, (ax_left, ax_right) = plt.subplots(nrows=1, ncols=2, figsize=(12, 4))
     for label in labels:
@@ -111,16 +104,16 @@ def compare_nonlinearity(
             label=label,
         )
 
-        output = Output.create(data=data, n=n)
+        output = Trace.create(data=data, n=n)
         xi, _ = calculate_nonlinearity(
-            output=output,
-            method=method,
+            trace=output,
+            model=model,
             **kwargs,
         )
 
         plt.sca(ax_left)
         plt.scatter(
-            output.exposure, output.average,
+            output.tau, output.u,
             s=10,
             label=label.split(' ')[0],
         )
@@ -131,13 +124,15 @@ def compare_nonlinearity(
 
         plt.sca(ax_right)
         plt.scatter(
-            output.average, xi,
+            output.u, xi,
             s=10,
             label=label.split(' ')[0],
         )
         ax_right.text(
             0.95, 0.95,
-            fr'method: {method}',
+            'method: {method}'.format(
+                method=getattr(model, 'name', 'base'),
+            ),
             transform=ax_right.transAxes,
             ha='right', va='top',
         )
@@ -151,7 +146,10 @@ def compare_nonlinearity(
         plt.legend()
 
     filedir = create_directory(os.path.join('.', 'img'), label=output.label)
-    filepath = os.path.join(filedir, f'nonlinearities ({method}, {n}).png')
+    filepath = os.path.join(filedir, 'nonlinearities ({method}), {n}).png'.format(
+        method=getattr(model, 'name', 'base'),
+        n=n,
+    ))
     plt.savefig(filepath)
 
     plt.show()

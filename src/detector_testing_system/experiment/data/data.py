@@ -8,145 +8,50 @@ import matplotlib.pyplot as plt
 import numpy as np
 from tqdm.notebook import tqdm
 
-from vmk_spectrum3_wrapper import VERSION
 from vmk_spectrum3_wrapper.device import Device
 from vmk_spectrum3_wrapper.measurement_manager.filters import (
     ClipFilter,
     PipeFilter,
     ScaleFilter,
 )
-from vmk_spectrum3_wrapper.types import Array, MilliSecond
-from vmk_spectrum3_wrapper.units import U, Units
+from vmk_spectrum3_wrapper.types import Array, MilliSecond, U
+from vmk_spectrum3_wrapper.units import Units
 
+from detector_testing_system.experiment.data.datum import Datum
 from detector_testing_system.experiment.utils import create_directory
 
 
-class Datum:
+def get_data_version(dat: Mapping[str, Any]) -> int:
 
-    def __init__(
-        self,
-        intensity: Array[U],
-        exposure: MilliSecond,
-        n_frames: int,
-        started_at: float,
-        units: Units,
-    ) -> None:
-        self.intensity = intensity
-        self.exposure = exposure
-        self.n_frames = n_frames
-        self.started_at = started_at
-        self.units = units
-
-        self._average = None
-        self._variance = None
-
-    @property
-    def average(self) -> Array[U]:
-        if self._average is None:
-            self._average = np.mean(self.intensity, axis=0)
-
-        return self._average
-
-    @property
-    def variance(self) -> Array[U]:
-        if self._variance is None:
-            self._variance = np.std(self.intensity, axis=0, ddof=1) ** 2
-
-        return self._variance
-
-    @property
-    def label(self) -> str:
-        return f'{self.exposure}'
-
-    @property
-    def n_times(self) -> int:
-        return self.intensity.shape[0]
-
-    @property
-    def n_numbers(self) -> int:
-        return self.intensity.shape[1]
-
-    def show(self) -> None:
-
-        fig, ax = plt.subplots(figsize=(6, 4), tight_layout=True)
-
-        plt.plot(
-            self.average,
-            label=reprlib.repr(self.label),
-        )
-
-        plt.xlabel(r'$number$')
-        plt.ylabel(r'$U$ {units}'.format(units=self.units.label))
-
-        plt.grid(color='grey', linestyle=':')
-        plt.legend()
-
-        plt.show()
-
-    def dumps(self) -> Mapping[str, Any]:
-        return {
-            'intensity': pickle.dumps(self.intensity),
-            'exposure': pickle.dumps(self.exposure),
-            'n_frames': self.n_frames,
-            'started_at': self.started_at,
-            'units': str(self.units),
-        }
-
-    @classmethod
-    def read(cls, device: Device) -> 'Datum':
-
-        raw = device.read()
-        return cls(
-            intensity=raw.intensity,
-            exposure=raw.meta.exposure,
-            n_frames=raw.meta.capacity,
-            started_at=raw.meta.started_at,
-            units=raw.units,
-        )
-
-    @classmethod
-    def loads(cls, dat: Mapping[str, Any]) -> 'Datum':
-
-        units = {
-            'Units.digit': Units.digit,
-            'Units.percent': Units.percent,
-            'Units.electron': Units.electron,
-        }.get(dat.get('units'), Units.percent)
-
-        datum = cls(
-            intensity=pickle.loads(dat.get('intensity')),
-            exposure=pickle.loads(dat.get('exposure')),
-            n_frames=dat.get('n_frames'),
-            started_at=dat.get('started_at'),
-            units=units,
-        )
-        return datum
-
-    def __str__(self) -> str:
-        cls = self.__class__
-        return f'{cls.__name__}({self.label})'
+    try:
+        return int(dat.get('version', 1))
+    except (TypeError, ValueError):
+        return 1
 
 
 class Data:
+
+    DATA_VERSION = 2
 
     def __init__(
         self,
         __data: Sequence[Datum],
         label: str = '',
     ) -> None:
+
         self.data = tuple(__data)
         self.label = label
 
-        self._average = None
+        self._u = None
         self._variance = None
-        self._exposure = None
+        self._tau = None
 
     @property
-    def average(self) -> Array[U]:
-        if self._average is None:
-            self._average = np.array([datum.average for datum in self.data])
+    def u(self) -> Array[U]:
+        if self._u is None:
+            self._u = np.array([datum.u for datum in self.data])
 
-        return self._average
+        return self._u
 
     @property
     def variance(self) -> Array[U]:
@@ -156,11 +61,11 @@ class Data:
         return self._variance
 
     @property
-    def exposure(self) -> Array[MilliSecond]:
-        if self._exposure is None:
-            self._exposure = np.array([datum.exposure for datum in self.data])
+    def tau(self) -> Array[MilliSecond]:
+        if self._tau is None:
+            self._tau = np.array([datum.tau for datum in self.data])
 
-        return self._exposure
+        return self._tau
 
     @property
     def started_at(self) -> float:
@@ -185,15 +90,15 @@ class Data:
         return self.data[0].units
 
     def concatenate(self, n: int) -> Array[U]:
-        return np.concatenate([datum.intensity[:, n] for datum in self])
+        raise ValueError('Raw intensity time series is not stored in aggregated data!')
 
     def show(self, legend: bool = False, save: bool = False) -> None:
-        """Show data."""
+        """Show data"""
 
         fig, ax = plt.subplots(figsize=(6, 4), tight_layout=True)
 
         plt.plot(
-            self.average.T,
+            self.u.T,
             label=[reprlib.repr(datum.label) for datum in self.data],
         )
         ax.text(
@@ -217,7 +122,7 @@ class Data:
         plt.show()
 
     def save(self) -> None:
-        """Save data to `./data/<label>/data.pkl` file."""
+        """Save data to `./data/<label>/data.pkl` file"""
 
         filedir = create_directory(os.path.join('.', 'data'), label=self.label)
         filepath = os.path.join(filedir, 'data.pkl')
@@ -227,7 +132,7 @@ class Data:
     def dumps(self) -> Mapping[str, Any]:
 
         dat = {
-            'version': VERSION,
+            'version': self.DATA_VERSION,
             'data': tuple([datum.dumps() for datum in self.data]),
             'units': str(self.units),
             'label': str(self.label),
@@ -243,7 +148,7 @@ class Data:
 
     @classmethod
     def load(cls, label: str) -> 'Data':
-        """Load data from filepath."""
+        """Load data from filepath"""
 
         filedir = os.path.join('.', 'data', label)
         filepath = os.path.join(filedir, 'data.pkl')
@@ -255,6 +160,11 @@ class Data:
 
     @classmethod
     def loads(cls, dat: Mapping[str, Any], label: str) -> 'Data':
+        if get_data_version(dat) != cls.DATA_VERSION:
+            raise ValueError(
+                'Unsupported data format version. '
+                'Run migrate_data(label) first.',
+            )
 
         data = cls(
             map(Datum.loads, dat.get('data', [])),
@@ -265,6 +175,12 @@ class Data:
     def __getitem__(self, index: int) -> Datum:
         return self.data[index]
 
+    def __iter__(self):
+        return iter(self.data)
+
+    def __len__(self) -> int:
+        return len(self.data)
+
     def __str__(self) -> str:
         cls = self.__class__
         return f'{cls.__name__}({self.label})'
@@ -272,17 +188,17 @@ class Data:
 
 def read_data(
     device: Device,
-    exposure: Sequence[MilliSecond],
+    tau: Sequence[MilliSecond],
     n_frames: int,
     verbose: bool = True,
 ) -> Data:
-    """Read data with a given sequence of `exposure` and `n_frames`."""
+    """Read data with a given sequence of `tau` and `n_frames`"""
 
     data = []
-    for tau in tqdm(exposure, disable=not verbose):
+    for exposure in tqdm(tau, disable=not verbose):
         device.setup(
             n_times=1,
-            exposure=float(tau),
+            exposure=float(exposure),
             capacity=n_frames,
             filter=PipeFilter(filters=[
                 ClipFilter(),
@@ -296,17 +212,3 @@ def read_data(
         data.append(datum)
 
     return Data.create(data)
-
-
-def load_data(
-    label: str,
-    show: bool = False,
-) -> Data:
-    """Load data from `./data//<label>/data.pkl` file."""
-
-    data = Data.load(label=label)
-
-    if show:
-        data.show()
-
-    return data

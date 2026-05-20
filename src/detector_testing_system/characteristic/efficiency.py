@@ -1,4 +1,4 @@
-"""Calculate an efficiency (factor to convert percents to electrons)."""
+"""Calculate an efficiency (factor to convert percents to electrons)"""
 
 from collections.abc import Sequence
 
@@ -10,11 +10,11 @@ from vmk_spectrum3_wrapper.types import Array
 
 from detector_testing_system.characteristic.bias import calculate_bias
 from detector_testing_system.experiment import Data, EmptyArrayError
-from detector_testing_system.output import Output
+from detector_testing_system.trace import Trace
 from detector_testing_system.utils import (
     calculate_stats,
     normalize_values,
-    treat_outliers,
+    trunk_outliers,
 )
 
 
@@ -22,21 +22,21 @@ DEGREE = 1
 
 
 def calculate_efficiency(
-    output: Output,
+    trace: Trace,
     threshold: tuple[float, float],
     verbose: bool = False,
     show: bool = False,
 ) -> float:
 
     lb, ub = threshold
-    mask = (lb < output.average) & (output.average < ub)
+    mask = (lb < trace.u) & (trace.u < ub)
     if len(np.argwhere(mask)) < DEGREE + 1:
         raise EmptyArrayError(
-            message=f'Data don\'t enough to be fitted! Efficiency calculation was failed in cell {output.n}.',
+            message=f'Data don\'t enough to be fitted! Efficiency calculation was failed in cell {trace.n}.',
         )
 
-    p = np.polyfit(output.average[mask], output.variance[mask], deg=DEGREE)
-    variance_hat = np.polyval(p, output.average)
+    p = np.polyfit(trace.u[mask], trace.variance[mask], deg=DEGREE)
+    variance_hat = np.polyval(p, trace.u)
 
     angle = p[0]
     if angle < 0:
@@ -51,20 +51,20 @@ def calculate_efficiency(
         fig, ax = plt.subplots(figsize=(6, 4))
 
         bias = calculate_bias(
-            output=output,
+            trace=trace,
             threshold=threshold,
         )
 
         plt.scatter(
-            output.average, output.variance,
+            trace.u, trace.variance,
             c='grey', s=10,
         )
         plt.scatter(
-            output.average[mask], output.variance[mask],
+            trace.u[mask], trace.variance[mask],
             c='red', s=10,
         )
         plt.plot(
-            output.average, variance_hat,
+            trace.u, variance_hat,
             linestyle='solid', c='grey',
         )
         plt.text(
@@ -72,19 +72,19 @@ def calculate_efficiency(
             '\n'.join([
                 r'$U_{{b}}$: {bias:.4f} {units}'.format(
                     bias=bias,
-                    units=output.units.label,
+                    units=trace.units.label,
                 ),
                 r'$k$: {efficiency:.0f} [$e^-/\%$]'.format(
                     efficiency=np.round(efficiency, 0),
                 ),
                 r'$c$: {efficiency:.0f} [$e^-$]'.format(
-                    efficiency=np.round(efficiency, 0) * output.units.value_max,
+                    efficiency=np.round(efficiency, 0) * trace.units.value_max,
                 ),
             ]),
             transform=ax.transAxes,
             ha='left', va='top',
         )
-        plt.xlabel(r'$U$ {units}'.format(units=output.units.label))
+        plt.xlabel(r'$U$ {units}'.format(units=trace.units.label))
         plt.ylabel(r'$\sigma^{2}$')
         plt.grid(color='grey', linestyle=':')
 
@@ -108,19 +108,16 @@ def research_efficiency(
     for n, *_ in np.argwhere(mask):
         try:
             value = calculate_efficiency(
-                output=Output.create(data=data, n=n),
+                trace=Trace.create(data=data, n=n),
                 threshold=threshold,
             )
-
         except EmptyArrayError as error:
             value = float(np.nan)
 
             if verbose:
                 print(error)
-
         except Exception as error:
             print(error)
-
         finally:
             efficiency[n] = value
 
@@ -169,7 +166,7 @@ def research_efficiency(
 
     if show and False:  # deprecated functionality
         values = efficiency.copy()[~np.isnan(efficiency)]
-        values = treat_outliers(values)
+        values = trunk_outliers(values)
         values = normalize_values(values)
 
         # show

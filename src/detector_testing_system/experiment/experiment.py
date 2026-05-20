@@ -16,7 +16,7 @@ from detector_testing_system.experiment.data import Data, read_data
 
 
 def check_source(func: Callable) -> Callable:
-    """Check a stability of the light source."""
+    """Check a stability of the light source"""
 
     @wraps(func)
     def wrapper(device: Device, config: ExperimentConfig, *args, **kwargs):
@@ -25,32 +25,32 @@ def check_source(func: Callable) -> Callable:
 
         before = read_data(
             device,
-            exposure=[config.check_source_tau],
+            tau=[config.check_source_tau],
             n_frames=config.check_source_n_frames,
             verbose=False,
         )
         experiment = func(device, config, *args, **kwargs)
         after = read_data(
             device,
-            exposure=[config.check_source_tau],
+            tau=[config.check_source_tau],
             n_frames=config.check_source_n_frames,
             verbose=False,
         )
 
         duration = after.started_at - before.started_at
-        bias = np.mean(after.average - before.average)
+        bias = np.mean(after.u - before.u)
 
         if config.check_source_show:
             fig, (ax_left, ax_right) = plt.subplots(nrows=1, ncols=2, figsize=(12, 4), tight_layout=True)
 
             plt.sca(ax_left)
             plt.plot(
-                before.average.squeeze(),
+                before.u.squeeze(),
                 linestyle='none', marker='.', markersize=2,
                 label='before',
             )
             plt.plot(
-                after.average.squeeze(),
+                after.u.squeeze(),
                 linestyle='none', marker='.', markersize=2,
                 label='after',
             )
@@ -61,7 +61,7 @@ def check_source(func: Callable) -> Callable:
 
             plt.sca(ax_right)
             plt.plot(
-                (after.average - before.average).squeeze(),
+                (after.u - before.u).squeeze(),
                 linestyle='none', marker='.', markersize=2,
                 color='black',
             )
@@ -99,7 +99,7 @@ def check_source(func: Callable) -> Callable:
 
 
 def check_total(func: Callable) -> Callable:
-    """Check an estimation of experiment's total time."""
+    """Check an estimation of experiment's total time"""
 
     @wraps(func)
     def wrapper(device: Device, config: ExperimentConfig, params: Sequence[tuple[int, Array[MilliSecond]]], *args, **kwargs):
@@ -107,10 +107,10 @@ def check_total(func: Callable) -> Callable:
             return func(device, config, params, *args, **kwargs)
 
         total = 0
-        for n_frames, exposure in params:
-            total += (n_frames + 1) * np.sum(exposure)  # FIXME: +1 frame
-        n_exposures = sum([len(exposure) for n_frames, exposure in params])
-        total += device.config.change_exposure_timeout * n_exposures
+        for n_frames, tau in params:
+            total += (n_frames + 1) * np.sum(tau)  # FIXME: +1 frame
+        n_times = sum([len(tau) for n_frames, tau in params])
+        total += device.config.change_exposure_timeout * n_times
         total = total/1e+3
 
         while True:
@@ -129,17 +129,17 @@ def check_total(func: Callable) -> Callable:
 
 
 def check_exposure(func: Callable) -> Callable:
-    """Check an exposure time."""
+    """Check an tau (exposure time)"""
 
     @wraps(func)
     def wrapper(device: Device, config: ExperimentConfig, params: Sequence[tuple[int, Array[MilliSecond]]], *args, **kwargs):
         if config.check_exposure_flag is False:
             return func(device, config, params, *args, **kwargs)
 
-        if min([min(exposure) for _, exposure in params]) < config.check_exposure_min:
-            raise ValueError('Check a min exposure or change `check_exposure_min`!')
-        if max([max(exposure) for _, exposure in params]) > config.check_exposure_max:
-            raise ValueError('Check a max exposure or change `check_exposure_max`!')
+        if min([min(tau) for _, tau in params]) < config.check_exposure_min:
+            raise ValueError('Check a min `tau` or change `check_exposure_min`!')
+        if max([max(tau) for _, tau in params]) > config.check_exposure_max:
+            raise ValueError('Check a max `tau` or change `check_exposure_max`!')
         return func(device, config, params, *args, **kwargs)
 
     return wrapper
@@ -155,7 +155,7 @@ def run_experiment(
     label: str | None = None,
     force: bool = False,
 ) -> None:
-    """Run experiment with given params."""
+    """Run experiment with given params"""
 
     if label is None:
         label = datetime.strftime(datetime.now(), '%Y%m%d-%H%M%S')
@@ -165,10 +165,10 @@ def run_experiment(
     if force or not os.path.isfile(filepath):
 
         data = []
-        for n_frames, exposure in params:
+        for n_frames, tau in params:
             _data = read_data(
                 device=device,
-                exposure=exposure,
+                tau=tau,
                 n_frames=n_frames,
                 verbose=True,
             )

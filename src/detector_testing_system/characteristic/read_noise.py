@@ -7,7 +7,7 @@ from detector_testing_system.experiment import Data
 
 
 def show_intensity(data: Data, n: int, show: bool = False, bins: int = 100) -> Array[float]:
-    """Show a intensity of the cell."""
+    """Show a intensity of the cell"""
 
     intensity = data.concatenate(n=n)
 
@@ -40,7 +40,7 @@ def show_intensity(data: Data, n: int, show: bool = False, bins: int = 100) -> A
 
 
 def research_read_noise(data: Data, show: bool = False) -> Array[float]:
-    """Calculate a read noise of the cells."""
+    """Calculate a read noise of the cells"""
 
     read_noise = np.mean(np.sqrt(data.variance), axis=0)
 
@@ -73,7 +73,7 @@ def research_read_noise(data: Data, show: bool = False) -> Array[float]:
 
 
 def research_relative_read_noise(data: Data, show: bool = False) -> Array[float]:
-    """Calculate a read noise of the cells."""
+    """Calculate a read noise of the cells"""
 
     read_noise = 100 * np.std(np.sqrt(data.variance), ddof=1, axis=0) / np.mean(np.sqrt(data.variance), axis=0)
 

@@ -6,116 +6,96 @@ import numpy as np
 
 from vmk_spectrum3_wrapper.types import Array
 
+from detector_testing_system.characteristic.dark_current.models import JNormDarkCurrentModel
 from detector_testing_system.characteristic.gradient import calculate_gradient
 from detector_testing_system.experiment.utils import create_directory
-from detector_testing_system.output import Output
+from detector_testing_system.trace import Trace
 
 
 def calculate_nonlinearity_jnorm(
-    output: Output,
-    epsilon: float = .10,
-    min_points: int = 10,
+    trace: Trace,
+    model: JNormDarkCurrentModel,
     k: float = 2,
     show: bool = False,
     xlim: tuple[float, float] = None,
     ylim: tuple[float, float] = None,
 ) -> tuple[Array[float], float]:
 
-    u_grad = calculate_gradient(output=output)
-    mask = _select_mask(
+    u_grad = calculate_gradient(trace=trace)
+    result = model.fit(trace=trace)
+
+    x_intersection = _calculate_intersection(
+        u=trace.u,
         u_grad=u_grad,
-        epsilon=epsilon,
-        min_points=min_points,
+        threshold=k * result.value,
     )
-
-    if not np.any(mask):
-        xi = np.full(len(output.average), np.nan)
-        span = float(np.nan)
-        a = float(np.nan)
-        b = float(np.nan)
-        u_hat = xi
-
+    if x_intersection is not None:
+        span = x_intersection - trace.u[0]
     else:
-        a = float(np.mean(np.asarray(u_grad)[mask]))
-        b = float(np.mean(output.average[mask] - a * output.exposure[mask]))
-        u_hat = a * output.exposure + b
-        xi = _calculate_xi(
-            tau=output.exposure,
-            u=output.average,
-            u_hat=u_hat,
-            jnorm=a,
-        )
-        x_intersection = _calculate_intersection(
-            u=output.average,
-            u_grad=u_grad,
-            threshold=k * a,
-        )
-        if x_intersection is not None:
-            span = x_intersection - output.average[0]
-        else:
-            span = 0
+        span = 0
 
     if show:
         fig, (ax_left, ax_right) = plt.subplots(nrows=1, ncols=2, figsize=(12, 4))
 
         plt.sca(ax_left)
         plt.scatter(
-            output.exposure, output.average,
+            trace.tau, trace.u,
             c='grey', s=10,
         )
         plt.scatter(
-            output.exposure[mask], output.average[mask],
+            trace.tau[result.mask], trace.u[result.mask],
             c='red', s=10,
             label=r'$U$',
         )
         plt.plot(
-            output.exposure, u_hat,
+            trace.tau, result.interpolate(trace.tau),
             color='black', linestyle='solid', linewidth=1,
             label=r'$\hat{U}$',
         )
         ax_left.text(
             0.95, 0.05/2,
             '\n'.join([
-                fr'$a = {{{a:.4f}}}$',
-                fr'$b = {{{b:.4f}}}$',
+                fr'$a = {{{result.value:.4f}}}$',
+                fr'$b = {{{result.bias:.4f}}}$',
             ]),
             transform=plt.gca().transAxes,
             ha='right', va='bottom',
         )
         plt.xlabel(r'$\tau$ [ms]')
-        plt.ylabel(r'$U$ {units}'.format(units=output.units.label))
+        plt.ylabel(r'$U$ {units}'.format(units=trace.units.label))
         plt.grid(color='grey', linestyle=':')
         plt.legend()
 
         plt.sca(ax_right)
         plt.scatter(
-            output.average, u_grad,
+            trace.u, u_grad,
             c='grey', s=10,
         )
         plt.scatter(
-            output.average[mask], u_grad[mask],
+            trace.u[result.mask], u_grad[result.mask],
             c='red', s=10,
             label=r'$U$',
         )
         plt.axhline(
-            a,
+            result.value,
             color='black', linestyle='solid', linewidth=1,
         )
         plt.axhline(
-            k * a,
+            k * result.value,
             color='red', linestyle='--', linewidth=1,
         )
-        ax_right.axvspan(
-            output.average[0],
-            x_intersection,
-            color='grey',
-            alpha=.125,
-        )
+        if x_intersection is not None:
+            ax_right.axvspan(
+                trace.u[0],
+                x_intersection,
+                color='grey',
+                alpha=.125,
+            )
         ax_right.text(
             0.95, 0.95,
             '\n'.join([
-                fr'{str(reprlib.repr(output.label))}',
-                fr'n: {output.n}',
+                fr'{str(reprlib.repr(trace.label))}',
+                fr'n: {trace.n}',
                 fr'$\Delta U$: {span:.2f} [%]',
             ]),
             transform=ax_right.transAxes,
@@ -125,43 +105,17 @@ def calculate_nonlinearity_jnorm(
             plt.xlim(xlim)
         if ylim:
             plt.ylim(ylim)
-        plt.xlabel(r'$U$ {units}'.format(units=output.units.label))
+        plt.xlabel(r'$U$ {units}'.format(units=trace.units.label))
         plt.ylabel(r'$dU / d\tau$')
         plt.grid(color='grey', linestyle=':')
 
-        filedir = create_directory(os.path.join('.', 'img'), label=output.label)
-        filepath = os.path.join(filedir, f'nonlinearity-jnorm ({output.n}).png')
+        filedir = create_directory(os.path.join('.', 'img'), label=trace.label)
+        filepath = os.path.join(filedir, f'nonlinearity-jnorm ({trace.n}).png')
         plt.savefig(filepath)
 
         plt.show()
 
-    return xi, span
-
-
-def _select_mask(
-    u_grad: Array[float],
-    epsilon: float,
-    min_points: int,
-) -> Array[bool]:
-    n_points = len(u_grad)
-
-    mask = np.full(n_points, False)
-    for n in range(n_points - min_points + 1):
-
-        if _relative_std(u_grad[n:]) <= epsilon:
-            mask[n:] = True
-            return mask
-
-    return mask
-
-
-def _calculate_xi(
-    tau: Array[float],
-    u: Array[float],
-    u_hat: Array[float],
-    jnorm: float,
-) -> Array[float]:
-    return 100 * (u_hat - u) / (jnorm * tau)
+    return result.xi, span
 
 
 def _calculate_intersection(
@@ -188,12 +142,3 @@ def _calculate_intersection(
         x_intersection = float(x0 + (threshold - y0) * (x1 - x0) / (y1 - y0))
 
     return x_intersection
-
-
-def _relative_std(values: Array[float]) -> float:
-
-    mean = float(np.mean(values))
-    if mean == 0 or not np.isfinite(mean):
-        return float(np.inf)
-
-    return float(np.std(values) / abs(mean))

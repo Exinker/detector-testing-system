@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+
 import numpy as np
 
 from vmk_spectrum3_wrapper.types import Array, MilliSecond
@@ -8,10 +9,11 @@ from detector_testing_system.experiment import Data, EmptyArrayError
 
 
 @dataclass
-class Output:
-    average: Array[U]
+class Trace:
+
+    u: Array[U]
     variance: Array[U]
-    exposure: Array[MilliSecond]
+    tau: Array[MilliSecond]
     n: int
     label: str
     units: Units
@@ -22,13 +24,14 @@ class Output:
         data: Data,
         n: int,
         threshold: float | None = None,
-    ) -> 'Output':
-        average = data.average[:, n]
+    ) -> 'Trace':
+
+        u = data.u[:, n]
         variance = data.variance[:, n]
-        exposure = data.exposure
+        tau = data.tau
 
         threshold = threshold or data.units.value_max
-        cond = average < threshold
+        cond = u < threshold
 
         if not np.any(cond):
             raise EmptyArrayError(
@@ -36,9 +39,9 @@ class Output:
             )
 
         return cls(
-            average=average[cond],
+            u=u[cond],
             variance=variance[cond],
-            exposure=exposure[cond],
+            tau=tau[cond],
             n=n,
             label=data.label,
             units=data.units,

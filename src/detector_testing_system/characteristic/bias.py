@@ -4,7 +4,7 @@ import numpy as np
 from vmk_spectrum3_wrapper.types import Array
 
 from detector_testing_system.experiment import Data, EmptyArrayError
-from detector_testing_system.output import Output
+from detector_testing_system.trace import Trace
 from detector_testing_system.utils import calculate_stats
 
 
@@ -12,37 +12,37 @@ DEGREE = 1
 
 
 def calculate_bias(
-    output: Output,
+    trace: Trace,
     threshold: tuple[float, float],
     show: bool = False,
 ) -> float:
-    """Calculate a bias of the cell."""
+    """Calculate a bias of the cell"""
 
     lb, ub = threshold
-    mask = (lb < output.average) & (output.average < ub)
+    mask = (lb < trace.u) & (trace.u < ub)
     if len(np.argwhere(mask)) < DEGREE + 1:
         raise EmptyArrayError(
-            message=f'Data don\'t enough to be fitted! Bias calculation was failed in cell {output.n}.',
+            message=f'Data don\'t enough to be fitted! Bias calculation was failed in cell {trace.n}.',
         )
 
-    p = np.polyfit(output.exposure[mask], output.average[mask], deg=DEGREE)
+    p = np.polyfit(trace.tau[mask], trace.u[mask], deg=DEGREE)
     bias = p[1]
 
-    u_hat = np.polyval(p, output.exposure)
+    u_hat = np.polyval(p, trace.tau)
 
     if show:
         fig, ax = plt.subplots(figsize=(6, 4), tight_layout=True)
 
         plt.scatter(
-            output.exposure, output.average,
+            trace.tau, trace.u,
             c='grey', s=10,
         )
         plt.scatter(
-            output.exposure[mask], output.average[mask],
+            trace.tau[mask], trace.u[mask],
             c='red', s=10,
         )
         plt.plot(
-            output.exposure, u_hat,
+            trace.tau, u_hat,
             color='black', linestyle='-', linewidth=1,
         )
         plt.scatter(
@@ -54,18 +54,18 @@ def calculate_bias(
             0.05/2, 0.95,
             '\n'.join([
                 r'$n$: {n:.0f}'.format(
-                    n=output.n,
+                    n=trace.n,
                 ),
                 r'$U_{{b}}$: {bias:.4f} {units}'.format(
                     bias=bias,
-                    units=output.units.label,
+                    units=trace.units.label,
                 ),
             ]),
             transform=ax.transAxes,
             ha='left', va='top',
         )
         plt.xlabel(r'$\tau$ {units}'.format(units=r'[$ms$]'))
-        plt.ylabel(r'$U$ {units}'.format(units=output.units.label))
+        plt.ylabel(r'$U$ {units}'.format(units=trace.units.label))
         plt.grid(color='grey', linestyle=':')
 
         plt.show()
@@ -80,23 +80,21 @@ def research_bias(
     verbose: bool = False,
     show: bool = False,
 ) -> Array[float]:
-    """Calculate a bias of the cells."""
+    """Calculate a bias of the cells"""
     threshold = threshold or (0, data.units.value_max)
 
     bias = np.zeros(data.n_numbers)
     for n in range(data.n_numbers):
         try:
             value = calculate_bias(
-                output=Output.create(data=data, n=n),
+                trace=Trace.create(data=data, n=n),
                 threshold=threshold,
             )
-
         except EmptyArrayError as error:
             value = float(np.nan)
 
             if verbose:
                 print(error)
-
         finally:
             bias[n] = value
 

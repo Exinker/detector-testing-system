@@ -5,6 +5,26 @@ from vmk_spectrum3_wrapper.detector import Detector
 from vmk_spectrum3_wrapper.types import Array
 
 from detector_testing_system.experiment.data.data import Data, Datum
+from detector_testing_system.experiment.data.migrations import migrate_data
+
+
+def load_data(
+    label: str,
+    show: bool = False,
+) -> Data:
+    """Load data from `./data//<label>/data.pkl` file"""
+
+    try:
+        data = migrate_data(
+            label=label,
+        )
+    except ValueError:
+        data = Data.load(label=label)
+
+    if show:
+        data.show()
+
+    return data
 
 
 def split_data_by_detector(
@@ -16,8 +36,9 @@ def split_data_by_detector(
 
     def select(datum: Datum, index: slice) -> Datum:
         return Datum(
-            intensity=datum.intensity[:, index],
-            exposure=datum.exposure,
+            u=datum.u[index],
+            variance=datum.variance[index],
+            tau=datum.tau,
             n_frames=datum.n_frames,
             started_at=datum.started_at,
             units=datum.units,

@@ -3,6 +3,7 @@ from .data import (
     Data,
     create_mask,
     load_data,
+    migrate_data,
     read_data,
     split_data_by_detector,
 )
