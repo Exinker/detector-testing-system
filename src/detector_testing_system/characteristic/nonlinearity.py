@@ -10,18 +10,29 @@ from vmk_spectrum3_wrapper.types import Array, MilliSecond
 from detector_testing_system.experiment import Data, EmptyArrayError, load_data
 from detector_testing_system.experiment.utils import create_directory
 from detector_testing_system.output import Output
-
+from detector_testing_system.utils import calculate_stats
 
 def calculate_nonlinearity(
     output: Output,
     span: tuple[MilliSecond, MilliSecond] = None,
+    threshold: tuple[float, float] = None,
     show: bool = False,
     xlim: tuple[float, float] = None,
     ylim: tuple[float, float] = None,
+    txlim: tuple[float, float] = None,
+    tylim: tuple[float, float] = None,    
 ) -> tuple[Array[float], float]:
-    span = span or (min(output.exposure), max(output.exposure))
 
-    mask = (output.exposure >= span[0]) & (output.exposure <= span[1])
+    if (threshold != None):   
+        lb, ub = threshold
+        mask = (lb < output.average) & (output.average < ub)
+    else: 
+        span = span or (min(output.exposure), max(output.exposure))
+        mask = (output.exposure >= span[0]) & (output.exposure <= span[1])
+    if len(np.argwhere(mask)) < 2:
+        raise EmptyArrayError(
+            message=f'Data don\'t enough to be fitted! Efficiency calculation was failed in cell {output.n}.',
+        )    
     p = _optimize(output.exposure[mask], output.average[mask])
     u_hat = np.polyval(p, output.exposure)
 
@@ -55,6 +66,10 @@ def calculate_nonlinearity(
             transform=plt.gca().transAxes,
             ha='right', va='bottom',
         )
+        if txlim:
+            plt.xlim(txlim)
+        if tylim:
+            plt.ylim(tylim)
         plt.xlabel(r'$\tau$ [ms]')
         plt.ylabel(r'$U$ {units}'.format(units=output.units.label))
         plt.grid(color='grey', linestyle=':')
@@ -107,17 +122,24 @@ def calculate_nonlinearity(
 
 def research_nonlinearity(
     data: Data,
+    chipn: int = 0,
+    label: str = None,
     mask: Array[bool] | None = None,
     verbose: bool = False,
     show: bool = False,
+    threshold: tuple[float, float] | None = None,
+    ylim: tuple[float, float] = None,
 ) -> Array[float]:
+    threshold = threshold or (0, data.units.value_max)
     mask = np.full(data.n_numbers, True) if mask is None else mask
 
     alpha = np.full(data.n_numbers, np.nan)
     for n, *_ in np.argwhere(mask):
         try:
+            output = Output.create(data=data, n=n)
             _, value = calculate_nonlinearity(
-                output=Output.create(data=data, n=n),
+                  output=output,
+                  threshold=threshold,  
             )
 
         except EmptyArrayError as error:
@@ -130,12 +152,19 @@ def research_nonlinearity(
             alpha[n] = value
 
     if show:
+        mean, ci = calculate_stats(alpha, 0.95)
+        alphasd = 3*np.std(alpha)
+        labelprnt = reprlib.repr(data.label)  if label is None else label
         fig, ax = plt.subplots(figsize=(6, 4))
 
         ax.text(
             0.05/2, 0.95,
             '\n'.join([
-                reprlib.repr(data.label),
+                labelprnt,
+                r'$\alpha$: {mean:.4f} $Line: $ {cn}'.format(
+                    mean=mean,
+                    cn=chipn,
+                ),
             ]),
             transform=ax.transAxes,
             ha='left', va='top',
@@ -145,10 +174,16 @@ def research_nonlinearity(
             c='red', s=10,
             label=r'$U$',
         )
+        if ylim:
+            plt.ylim(ylim)
         plt.xlabel(r'number')
         plt.ylabel(r'$\alpha$ [%]')
         plt.grid(color='grey', linestyle=':')
 
+
+        filedir = create_directory(os.path.join('.', 'img'), label=output.label)
+        filepath = os.path.join(filedir, f'res_nonlinearity___({chipn}).png')
+        plt.savefig(filepath)
         plt.show()
 
     return alpha
@@ -159,6 +194,8 @@ def compare_nonlinearity(
     n: int,
     xlim: tuple[float, float] = None,
     ylim: tuple[float, float] = None,
+    txlim: tuple[float, float] = None,
+    tylim: tuple[float, float] = None,   
 ) -> None:
 
     fig, (ax_left, ax_right) = plt.subplots(nrows=1, ncols=2, figsize=(12, 4))
@@ -178,6 +215,10 @@ def compare_nonlinearity(
             s=10,
             label=label.split(' ')[0],
         )
+        if txlim:
+            plt.xlim(txlim)
+        if tylim:
+            plt.ylim(tylim)
         plt.xlabel(r'$\tau$ [ms]')
         plt.ylabel(r'$U$ {units}'.format(units=data.units.label))
         plt.grid(color='grey', linestyle=':')
@@ -204,6 +245,61 @@ def compare_nonlinearity(
 
     plt.show()
 
+def compare_nonlinearities(
+    datas: Sequence[Data],
+    names: Sequence[str],
+    n: int,
+    xlim: tuple[float, float] = None,
+    ylim: tuple[float, float] = None,
+    txlim: tuple[float, float] = None,
+    tylim: tuple[float, float] = None,   
+) -> None:
+    j=0
+    fig, (ax_left, ax_right) = plt.subplots(nrows=1, ncols=2, figsize=(12, 4))
+    for data in datas:
+
+        output = Output.create(data=data, n=n)
+        xi, alpha = calculate_nonlinearity(
+            output=output,
+        )
+
+        plt.sca(ax_left)
+        plt.scatter(
+            output.exposure, output.average,
+            s=10,
+            # label=label.split(' ')[0],
+            label=names[j]
+        )
+        if txlim:
+            plt.xlim(txlim)
+        if tylim:
+            plt.ylim(tylim)
+        plt.xlabel(r'$\tau$ [ms]')
+        plt.ylabel(r'$U$ {units}'.format(units=data.units.label))
+        plt.grid(color='grey', linestyle=':')
+        plt.legend()
+
+        plt.sca(ax_right)
+        plt.scatter(
+            output.average, xi,
+            s=10,
+            # label=label.split(' ')[0],
+            label=names[j]
+        )
+        if xlim:
+            plt.xlim(xlim)
+        if ylim:
+            plt.ylim(ylim)
+        plt.xlabel(r'$U$ {units}'.format(units=data.units.label))
+        plt.ylabel(r'$error$ [%]')
+        plt.grid(color='grey', linestyle=':')
+        plt.legend()
+        j=j+1
+    filedir = create_directory(os.path.join('.', 'img'), label=output.label)
+    filepath = os.path.join(filedir, f'nonlinearities ({n}).png')
+    plt.savefig(filepath)
+
+    plt.show()
 
 def _calculate_xi(tau: Array[float], u: Array[float], p: Array[float]) -> Array[float]:
     """Calculate a residual of approximation."""
