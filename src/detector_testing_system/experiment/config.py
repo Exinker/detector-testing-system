@@ -4,6 +4,8 @@ from dataclasses import dataclass
 from vmk_spectrum3_wrapper.types import MilliSecond
 from vmk_spectrum3_wrapper.units import Units
 
+from detector_testing_system import ROOT
+
 
 @dataclass
 class ExperimentConfig:
@@ -26,8 +28,10 @@ class ExperimentConfig:
     check_source_n_frames: int
 
     @classmethod
-    def from_ini(cls, filepath: str) -> 'ExperimentConfig':
+    def from_ini(cls, __label: str) -> 'ExperimentConfig':
         parser = ConfigParser(inline_comment_prefixes='#')
+
+        filepath = ROOT / 'ini' / f'{__label}.ini'
 
         flag = parser.read(filepath)
         assert flag, f'File {filepath} not found!'

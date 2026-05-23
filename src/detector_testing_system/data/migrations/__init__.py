@@ -1,9 +1,9 @@
-import os
 import pickle
 from typing import Any, Callable, Mapping
 
-from detector_testing_system.experiment.data.data import Data, get_data_version
-from detector_testing_system.experiment.data.migrations import v2_aggregate_data
+from detector_testing_system import ROOT
+from detector_testing_system.data.data import Data, get_data_version
+from detector_testing_system.data.migrations import v2_aggregate_data
 
 
 Migration = Callable[[Mapping[str, Any], str], Mapping[str, Any]]
@@ -18,8 +18,8 @@ MIGRATIONS: Mapping[int, tuple[int, Migration]] = {
 def migrate_data(label: str) -> Data:
     """Migrate `./data/<label>/data.pkl` to the current data format version"""
 
-    filedir = os.path.join('.', 'data', label)
-    filepath = os.path.join(filedir, 'data.pkl')
+    filedir = ROOT / 'data' / label
+    filepath = filedir / 'data.pkl'
 
     with open(filepath, 'rb') as file:
         dat = pickle.load(file)
@@ -30,14 +30,14 @@ def migrate_data(label: str) -> Data:
     if source_version > Data.DATA_VERSION:
         raise ValueError(f'Data format v{source_version} is newer than supported v{Data.DATA_VERSION}!')
 
-    backup_filepath = os.path.join(filedir, f'v{source_version}.data.pkl')
-    if os.path.exists(backup_filepath):
+    backup_filepath = filedir / f'v{source_version}.data.pkl'
+    if backup_filepath.exists():
         raise FileExistsError(f'Backup file already exists: {backup_filepath}')
 
     migrated = _migrate(dat, label=label)
     data = Data.loads(migrated, label=label)
 
-    os.rename(filepath, backup_filepath)
+    filepath.rename(backup_filepath)
     with open(filepath, 'wb') as file:
         pickle.dump(migrated, file)
 

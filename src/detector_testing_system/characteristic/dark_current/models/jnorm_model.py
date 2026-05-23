@@ -3,8 +3,8 @@ import numpy as np
 from vmk_spectrum3_wrapper.types import Array
 
 from detector_testing_system.characteristic.gradient import calculate_gradient
+from detector_testing_system.data import Trace
 from detector_testing_system.experiment import EmptyArrayError
-from detector_testing_system.trace import Trace
 
 from .base_model import DarkCurrentModelABC, DarkCurrentResult
 
@@ -25,7 +25,7 @@ class JNormDarkCurrentModel(DarkCurrentModelABC):
     def fit(self, trace: Trace) -> DarkCurrentResult:
 
         u_grad = calculate_gradient(trace=trace)
-        mask = self._select_mask(
+        mask = self._create_mask(
             u_grad=u_grad,
         )
         if sum(mask) == 0:
@@ -49,7 +49,7 @@ class JNormDarkCurrentModel(DarkCurrentModelABC):
             xi=xi,
         )
 
-    def _select_mask(
+    def _create_mask(
         self,
         u_grad: Array[float],
     ) -> Array[bool]:

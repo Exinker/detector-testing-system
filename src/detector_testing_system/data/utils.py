@@ -1,11 +1,14 @@
+from collections.abc import Sequence
+
 import numpy as np
 
 from vmk_spectrum3_wrapper.config import DEFAULT_DETECTOR
 from vmk_spectrum3_wrapper.detector import Detector
 from vmk_spectrum3_wrapper.types import Array
 
-from detector_testing_system.experiment.data.data import Data, Datum
-from detector_testing_system.experiment.data.migrations import migrate_data
+from detector_testing_system.data.data import Data
+from detector_testing_system.data.datum import Datum
+from detector_testing_system.data.migrations import migrate_data
 
 
 def load_data(
@@ -30,7 +33,7 @@ def load_data(
 def split_data_by_detector(
     __data: Data,
     detector: Detector = DEFAULT_DETECTOR,
-) -> tuple[Data]:
+) -> Sequence[Data]:
     n_pixels = detector.config.n_pixels
     assert __data.n_numbers % n_pixels == 0, 'Invalid detector is selected!'
 
@@ -51,6 +54,7 @@ def split_data_by_detector(
 
 
 def create_mask(__data: Data, bounds: tuple[int, int]) -> Array[bool]:
+
     lb, ub = bounds
     mask = np.full(__data.n_numbers, False)
     mask[lb:ub] = True

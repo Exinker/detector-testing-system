@@ -5,8 +5,8 @@ import numpy as np
 
 from vmk_spectrum3_wrapper.types import Array, MilliSecond, U
 
+from detector_testing_system.data import Trace
 from detector_testing_system.experiment import EmptyArrayError
-from detector_testing_system.trace import Trace
 
 
 @dataclass

@@ -9,8 +9,8 @@ import numpy as np
 from vmk_spectrum3_wrapper.types import Array
 
 from detector_testing_system.characteristic.bias import calculate_bias
-from detector_testing_system.experiment import Data, EmptyArrayError
-from detector_testing_system.trace import Trace
+from detector_testing_system.data import Data, Trace
+from detector_testing_system.experiment import EmptyArrayError
 from detector_testing_system.utils import (
     calculate_stats,
     normalize_values,
@@ -108,7 +108,7 @@ def research_efficiency(
     for n, *_ in np.argwhere(mask):
         try:
             value = calculate_efficiency(
-                trace=Trace.create(data=data, n=n),
+                trace=data.trace(n),
                 threshold=threshold,
             )
         except EmptyArrayError as error:

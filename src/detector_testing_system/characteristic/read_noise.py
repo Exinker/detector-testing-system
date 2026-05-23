@@ -3,13 +3,13 @@ import numpy as np
 
 from vmk_spectrum3_wrapper.types import Array
 
-from detector_testing_system.experiment import Data
+from detector_testing_system.data import Data
 
 
 def show_intensity(data: Data, n: int, show: bool = False, bins: int = 100) -> Array[float]:
     """Show a intensity of the cell"""
 
-    intensity = data.concatenate(n=n)
+    intensity = data.trace(n).u
 
     if show:
         fig, (ax_left, ax_right) = plt.subplots(nrows=1, ncols=2, figsize=(12, 4), tight_layout=True)

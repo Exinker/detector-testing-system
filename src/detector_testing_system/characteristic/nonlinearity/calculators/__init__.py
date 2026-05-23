@@ -1,11 +1,11 @@
 from vmk_spectrum3_wrapper.types import Array
 
-from detector_testing_system.trace import Trace
 from detector_testing_system.characteristic.dark_current.models import (
     BaseDarkCurrentModel,
     DarkCurrentModelABC,
     JNormDarkCurrentModel,
 )
+from detector_testing_system.data.trace import Trace
 from .calculate_nonlinearity_jnorm import calculate_nonlinearity_jnorm
 from .calculate_nonlinearity_base import calculate_nonlinearity_base
 

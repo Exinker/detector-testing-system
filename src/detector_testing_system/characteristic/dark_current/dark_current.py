@@ -7,8 +7,8 @@ from detector_testing_system.characteristic.dark_current.models import (
     BaseDarkCurrentModel,
     DarkCurrentModelABC,
 )
-from detector_testing_system.experiment import Data, EmptyArrayError
-from detector_testing_system.trace import Trace
+from detector_testing_system.data import Data, Trace
+from detector_testing_system.experiment import EmptyArrayError
 from detector_testing_system.utils import (
     calculate_bounds,
     calculate_stats,
@@ -84,7 +84,7 @@ def research_dark_current(
     for n, *_ in np.argwhere(mask):
         try:
             value = calculate_dark_current(
-                trace=Trace.create(data=data, n=n),
+                trace=data.trace(n),
                 model=model,
             )
         except EmptyArrayError as error:

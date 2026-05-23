@@ -1,8 +1,8 @@
+import itertools
+import os
 from collections.abc import Sequence
 from datetime import datetime
 from functools import wraps
-import itertools
-import os
 from typing import Callable
 
 import matplotlib.pyplot as plt
@@ -11,8 +11,9 @@ import numpy as np
 from vmk_spectrum3_wrapper.device import Device
 from vmk_spectrum3_wrapper.types import Array, MilliSecond
 
+from detector_testing_system import ROOT
+from detector_testing_system.data import Data, read_data
 from detector_testing_system.experiment.config import ExperimentConfig
-from detector_testing_system.experiment.data import Data, read_data
 
 
 def check_source(func: Callable) -> Callable:
@@ -160,8 +161,7 @@ def run_experiment(
     if label is None:
         label = datetime.strftime(datetime.now(), '%Y%m%d-%H%M%S')
 
-    filedir = os.path.join('.', 'data', label)
-    filepath = os.path.join(filedir, 'data.pkl')
+    filepath = ROOT / 'data' / label / 'data.pkl'
     if force or not os.path.isfile(filepath):
 
         data = []

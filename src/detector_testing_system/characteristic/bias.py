@@ -3,8 +3,8 @@ import numpy as np
 
 from vmk_spectrum3_wrapper.types import Array
 
-from detector_testing_system.experiment import Data, EmptyArrayError
-from detector_testing_system.trace import Trace
+from detector_testing_system.data import Data, Trace
+from detector_testing_system.experiment import EmptyArrayError
 from detector_testing_system.utils import calculate_stats
 
 
@@ -87,7 +87,7 @@ def research_bias(
     for n in range(data.n_numbers):
         try:
             value = calculate_bias(
-                trace=Trace.create(data=data, n=n),
+                trace=data.trace(n),
                 threshold=threshold,
             )
         except EmptyArrayError as error:

@@ -1,4 +1,3 @@
-import os
 import reprlib
 
 import matplotlib.pyplot as plt
@@ -6,8 +5,9 @@ import numpy as np
 
 from vmk_spectrum3_wrapper.types import Array
 
+from detector_testing_system import ROOT
+from detector_testing_system.data import Trace
 from detector_testing_system.experiment.utils import create_directory
-from detector_testing_system.trace import Trace
 
 
 def calculate_gradient(
@@ -72,8 +72,8 @@ def calculate_gradient(
         plt.ylabel(r'$dU / d\tau$')
         plt.grid(color='grey', linestyle=':')
 
-        filedir = create_directory(os.path.join('.', 'img'), label=trace.label)
-        filepath = os.path.join(filedir, f'gradient ({trace.n}).png')
+        filedir = create_directory(ROOT / 'img', label=trace.label)
+        filepath = filedir / f'gradient ({trace.n}).png'
         plt.savefig(filepath)
 
         plt.show()

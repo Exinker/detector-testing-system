@@ -1,4 +1,3 @@
-import os
 import pickle
 import reprlib
 from collections.abc import Sequence
@@ -14,11 +13,12 @@ from vmk_spectrum3_wrapper.measurement_manager.filters import (
     PipeFilter,
     ScaleFilter,
 )
-from vmk_spectrum3_wrapper.types import Array, MilliSecond, U
+from vmk_spectrum3_wrapper.types import Array, MilliSecond, Number, U
 from vmk_spectrum3_wrapper.units import Units
 
-from detector_testing_system.experiment.data.datum import Datum
-from detector_testing_system.experiment.utils import create_directory
+from detector_testing_system import ROOT
+from detector_testing_system.data.datum import Datum
+from detector_testing_system.data.trace import Trace
 
 
 def get_data_version(dat: Mapping[str, Any]) -> int:
@@ -89,8 +89,19 @@ class Data:
 
         return self.data[0].units
 
-    def concatenate(self, n: int) -> Array[U]:
-        raise ValueError('Raw intensity time series is not stored in aggregated data!')
+    def trace(
+        self,
+        __n: Number,
+    ) -> Trace:
+
+        return Trace(
+            u=self.u[:, __n],
+            variance=self.variance[:, __n],
+            tau=self.tau,
+            n=__n,
+            label=self.label,
+            units=self.units,
+        )
 
     def show(self, legend: bool = False, save: bool = False) -> None:
         """Show data"""
@@ -115,18 +126,20 @@ class Data:
         plt.legend().set_visible(legend)
 
         if save:
-            filedir = create_directory(os.path.join('.', 'img'), label=self.label)
-            filepath = os.path.join(filedir, 'data.png')
-            plt.savefig(filepath)
+            filedir = ROOT / 'img' / self.label
+            filedir.mkdir(parents=True, exist_ok=True)
+
+            plt.savefig(filedir / 'data.png')
 
         plt.show()
 
     def save(self) -> None:
         """Save data to `./data/<label>/data.pkl` file"""
 
-        filedir = create_directory(os.path.join('.', 'data'), label=self.label)
-        filepath = os.path.join(filedir, 'data.pkl')
-        with open(filepath, 'wb') as file:
+        filedir = ROOT / 'data' / self.label
+        filedir.mkdir(parents=True, exist_ok=True)
+
+        with open(filedir / 'data.pkl', 'wb') as file:
             pickle.dump(self.dumps(), file)
 
     def dumps(self) -> Mapping[str, Any]:
@@ -150,8 +163,8 @@ class Data:
     def load(cls, label: str) -> 'Data':
         """Load data from filepath"""
 
-        filedir = os.path.join('.', 'data', label)
-        filepath = os.path.join(filedir, 'data.pkl')
+        filedir = ROOT / 'data' / label
+        filepath = filedir / 'data.pkl'
         with open(filepath, 'rb') as file:
             dat = pickle.load(file)
 

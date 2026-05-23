@@ -3,7 +3,8 @@ from typing import Any, Mapping
 
 from vmk_spectrum3_wrapper.units import Units
 
-from detector_testing_system.experiment.data.data import Data, Datum
+from detector_testing_system.data.data import Data
+from detector_testing_system.data.datum import Datum
 
 
 SOURCE_VERSION = 1
@@ -23,23 +24,31 @@ def migrate(dat: Mapping[str, Any], label: str) -> Mapping[str, Any]:
 
 
 def _load_v1_datum(dat: Mapping[str, Any]) -> Datum:
-    if 'intensity' not in dat:
-        raise ValueError('Data format v1 must contain intensity!')
+
+    for key in [
+        'intensity',
+        'exposure',
+        'n_frames',
+        'started_at',
+        'units',
+    ]:
+        if key not in dat:
+            raise ValueError(f'Data format v1 must contain key: {key}!')
+
+    tau = dat['exposure']
+    if isinstance(tau, bytes):
+        tau = pickle.loads(tau)
 
     units = {
         'Units.digit': Units.digit,
         'Units.percent': Units.percent,
         'Units.electron': Units.electron,
-    }.get(dat.get('units'), Units.percent)
-
-    tau = dat.get('exposure')
-    if isinstance(tau, bytes):
-        tau = pickle.loads(tau)
+    }.get(dat['units'], Units.percent)
 
     return Datum.create(
-        intensity=pickle.loads(dat.get('intensity')),
+        intensity=pickle.loads(dat['intensity']),
         tau=tau,
-        n_frames=dat.get('n_frames'),
-        started_at=dat.get('started_at'),
+        n_frames=dat['n_frames'],
+        started_at=dat['started_at'],
         units=units,
     )

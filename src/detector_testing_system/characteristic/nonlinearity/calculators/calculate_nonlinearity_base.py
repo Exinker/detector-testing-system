@@ -1,4 +1,3 @@
-import os
 import reprlib
 
 import matplotlib.pyplot as plt
@@ -6,9 +5,10 @@ import numpy as np
 
 from vmk_spectrum3_wrapper.types import Array, U
 
+from detector_testing_system import ROOT
 from detector_testing_system.characteristic.dark_current.models import BaseDarkCurrentModel
+from detector_testing_system.data import Trace
 from detector_testing_system.experiment.utils import create_directory
-from detector_testing_system.trace import Trace
 
 
 def calculate_nonlinearity_base(
@@ -94,8 +94,8 @@ def calculate_nonlinearity_base(
         plt.ylabel(r'$error$ [%]')
         plt.grid(color='grey', linestyle=':')
 
-        filedir = create_directory(os.path.join('.', 'img'), label=trace.label)
-        filepath = os.path.join(filedir, f'nonlinearity-fit ({trace.n}).png')
+        filedir = create_directory(ROOT / 'img', label=trace.label)
+        filepath = filedir / f'nonlinearity-fit ({trace.n}).png'
         plt.savefig(filepath)
 
         plt.show()

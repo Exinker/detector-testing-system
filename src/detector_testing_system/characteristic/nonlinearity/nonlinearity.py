@@ -1,4 +1,3 @@
-import os
 import reprlib
 from collections.abc import Sequence
 
@@ -7,14 +6,15 @@ import numpy as np
 
 from vmk_spectrum3_wrapper.types import Array
 
+from detector_testing_system import ROOT
 from detector_testing_system.characteristic.dark_current.models import (
     BaseDarkCurrentModel,
     DarkCurrentModelABC,
 )
 from detector_testing_system.characteristic.nonlinearity.calculators import calculate_nonlinearity
-from detector_testing_system.experiment import Data, EmptyArrayError, load_data
+from detector_testing_system.data import Data, load_data
+from detector_testing_system.experiment import EmptyArrayError
 from detector_testing_system.experiment.utils import create_directory
-from detector_testing_system.trace import Trace
 
 
 def research_nonlinearity(
@@ -32,7 +32,7 @@ def research_nonlinearity(
     for n, *_ in np.argwhere(mask):
         try:
             _, value = calculate_nonlinearity(
-                trace=Trace.create(data=data, n=n),
+                trace=data.trace(n),
                 model=model,
                 **kwargs,
             )
@@ -104,16 +104,16 @@ def compare_nonlinearity(
             label=label,
         )
 
-        output = Trace.create(data=data, n=n)
+        trace = data.trace(n)
         xi, _ = calculate_nonlinearity(
-            trace=output,
+            trace=trace,
             model=model,
             **kwargs,
         )
 
         plt.sca(ax_left)
         plt.scatter(
-            output.tau, output.u,
+            trace.tau, trace.u,
             s=10,
             label=label.split(' ')[0],
         )
@@ -124,7 +124,7 @@ def compare_nonlinearity(
 
         plt.sca(ax_right)
         plt.scatter(
-            output.u, xi,
+            trace.u, xi,
             s=10,
             label=label.split(' ')[0],
         )
@@ -145,11 +145,11 @@ def compare_nonlinearity(
         plt.grid(color='grey', linestyle=':')
         plt.legend()
 
-    filedir = create_directory(os.path.join('.', 'img'), label=output.label)
-    filepath = os.path.join(filedir, 'nonlinearities ({method}), {n}).png'.format(
+    filedir = create_directory(ROOT / 'img', label=trace.label)
+    filepath = filedir / 'nonlinearities ({method}), {n}).png'.format(
         method=getattr(model, 'name', 'base'),
         n=n,
-    ))
+    )
     plt.savefig(filepath)
 
     plt.show()

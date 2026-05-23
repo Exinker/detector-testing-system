@@ -1,11 +1,12 @@
 import logging
 import os
+from pathlib import Path
 
 
 LOGGER = logging.getLogger(__name__)
 
 
-def create_directory(__root: str, label: str) -> str:
+def create_directory(__root: Path, label: str) -> Path:
 
     filedir = __root
     for suffix in ('', *os.path.split(label)):
@@ -18,4 +19,4 @@ def create_directory(__root: str, label: str) -> str:
             )
             os.mkdir(filedir)
 
-    return filedir
+    return Path(filedir)
