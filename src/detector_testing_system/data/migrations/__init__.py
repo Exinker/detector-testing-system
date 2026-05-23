@@ -19,8 +19,8 @@ def migrate_data(label: str) -> Data:
     """Migrate `./data/<label>/data.pkl` to the current data format version"""
 
     filedir = ROOT / 'data' / label
-    filepath = filedir / 'data.pkl'
 
+    filepath = filedir / 'data.pkl'
     with open(filepath, 'rb') as file:
         dat = pickle.load(file)
 

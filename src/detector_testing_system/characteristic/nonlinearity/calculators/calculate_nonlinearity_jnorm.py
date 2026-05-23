@@ -1,130 +1,170 @@
-import reprlib
+from dataclasses import dataclass
 
 import matplotlib.pyplot as plt
 import numpy as np
+from matplotlib.axes import Axes
 
 from vmk_spectrum3_wrapper.types import Array
 
-from detector_testing_system import ROOT
-from detector_testing_system.characteristic.dark_current.models import JNormDarkCurrentModel
-from detector_testing_system.characteristic.gradient import calculate_gradient
+from detector_testing_system.characteristic.dark_current.models import (
+    DarkCurrentModelABC,
+    DarkCurrentResult,
+    JNormDarkCurrentModel,
+)
+from detector_testing_system.characteristic.nonlinearity.results import NonlinearityResultABC
+from detector_testing_system.characteristic.gradient import (
+    GradientResult,
+    calculate_gradient,
+)
 from detector_testing_system.data import Trace
-from detector_testing_system.experiment.utils import create_directory
+from detector_testing_system.types import AxesView
+
+
+@dataclass
+class JNormNonlinearityResult(NonlinearityResultABC):
+
+    trace: Trace
+    model: DarkCurrentModelABC
+    dark_current: DarkCurrentResult
+    value: float
+    k: int
+
+    def _plot_left(
+        self,
+        ax: Axes,
+        view: AxesView | None,
+        color: str | None = None,
+        verbose: bool = False,
+        hat_label: str | None = r'$\hat{U}$',
+    ) -> None:
+        view = view or {}
+        color = color or 'red'
+
+        plt.sca(ax)
+        plt.scatter(
+            self.trace.tau, self.trace.u,
+            c='grey', s=10,
+        )
+        plt.scatter(
+            self.trace.tau[self.dark_current.mask], self.trace.u[self.dark_current.mask],
+            c=color, s=10,
+            label=rf'$U_{{{self.trace.n}}}$',
+        )
+        plt.plot(
+            self.trace.tau, self.dark_current.interpolate(self.trace.tau),
+            color='black', linestyle='solid', linewidth=1,
+            label=hat_label,
+        )
+        if verbose:
+            plt.text(
+                0.95, 0.05/2,
+                '\n'.join([
+                    fr'$a = {{{self.dark_current.value:.4f}}}$',
+                    fr'$b = {{{self.dark_current.bias:.4f}}}$',
+                ]),
+                transform=ax.transAxes,
+                ha='right', va='bottom',
+            )
+
+        plt.xlabel(r'$\tau$ [ms]')
+        plt.ylabel(r'$U$ {units}'.format(units=self.trace.units.label))
+
+        plt.grid(color='grey', linestyle=':')
+        plt.legend()
+
+        ax.set(**view)
+
+    def _plot_right(
+        self,
+        ax: Axes,
+        view: AxesView | None,
+        color: str | None = None,
+        verbose: bool = False,
+    ) -> None:
+        view = view or {}
+        color = color or 'red'
+
+        gradient = calculate_gradient(trace=self.trace)
+
+        plt.sca(ax)
+        plt.scatter(
+            self.trace.u, gradient.value,
+            c='grey', s=10,
+        )
+        plt.scatter(
+            self.trace.u[self.dark_current.mask], gradient.value[self.dark_current.mask],
+            c=color, s=10,
+            label=rf'$U_{{{self.trace.n}}}$',
+        )
+        plt.axhline(
+            self.dark_current.value,
+            color='black', linestyle='solid', linewidth=1,
+        )
+        if verbose and self.value > 0:
+            plt.axhline(
+                self.k * self.dark_current.value,
+                color='red', linestyle='--', linewidth=1,
+            )
+            plt.axvspan(
+                self.trace.u[0],
+                self.trace.u[0] + self.value,
+                color='grey',
+                alpha=.125,
+            )
+        if verbose:
+            plt.text(
+                0.95, 0.95,
+                '\n'.join([
+                    self.trace.label.prefix,
+                    fr'$\Delta U$: {self.value:.2f} [%]',
+                ]),
+                transform=ax.transAxes,
+                ha='right', va='top',
+            )
+
+        plt.xlabel(r'$U$ {units}'.format(units=self.trace.units.label))
+        plt.ylabel(r'$dU / d\tau$')
+
+        plt.grid(color='grey', linestyle=':')
+
+        ax.set(**view)
 
 
 def calculate_nonlinearity_jnorm(
     trace: Trace,
     model: JNormDarkCurrentModel,
     k: float = 2,
-    show: bool = False,
-    xlim: tuple[float, float] = None,
-    ylim: tuple[float, float] = None,
-) -> tuple[Array[float], float]:
+) -> JNormNonlinearityResult:
 
-    u_grad = calculate_gradient(trace=trace)
-    result = model.fit(trace=trace)
+    gradient = calculate_gradient(trace=trace)
+    dark_current = model.fit(trace=trace)
 
     x_intersection = _calculate_intersection(
         u=trace.u,
-        u_grad=u_grad,
-        threshold=k * result.value,
+        gradient=gradient,
+        threshold=k * dark_current.value,
     )
-    if x_intersection is not None:
-        span = x_intersection - trace.u[0]
-    else:
+    if x_intersection is None:
         span = 0
+    else:
+        span = x_intersection - trace.u[0]
 
-    if show:
-        fig, (ax_left, ax_right) = plt.subplots(nrows=1, ncols=2, figsize=(12, 4))
-
-        plt.sca(ax_left)
-        plt.scatter(
-            trace.tau, trace.u,
-            c='grey', s=10,
-        )
-        plt.scatter(
-            trace.tau[result.mask], trace.u[result.mask],
-            c='red', s=10,
-            label=r'$U$',
-        )
-        plt.plot(
-            trace.tau, result.interpolate(trace.tau),
-            color='black', linestyle='solid', linewidth=1,
-            label=r'$\hat{U}$',
-        )
-        ax_left.text(
-            0.95, 0.05/2,
-            '\n'.join([
-                fr'$a = {{{result.value:.4f}}}$',
-                fr'$b = {{{result.bias:.4f}}}$',
-            ]),
-            transform=plt.gca().transAxes,
-            ha='right', va='bottom',
-        )
-        plt.xlabel(r'$\tau$ [ms]')
-        plt.ylabel(r'$U$ {units}'.format(units=trace.units.label))
-        plt.grid(color='grey', linestyle=':')
-        plt.legend()
-
-        plt.sca(ax_right)
-        plt.scatter(
-            trace.u, u_grad,
-            c='grey', s=10,
-        )
-        plt.scatter(
-            trace.u[result.mask], u_grad[result.mask],
-            c='red', s=10,
-            label=r'$U$',
-        )
-        plt.axhline(
-            result.value,
-            color='black', linestyle='solid', linewidth=1,
-        )
-        plt.axhline(
-            k * result.value,
-            color='red', linestyle='--', linewidth=1,
-        )
-        if x_intersection is not None:
-            ax_right.axvspan(
-                trace.u[0],
-                x_intersection,
-                color='grey',
-                alpha=.125,
-            )
-        ax_right.text(
-            0.95, 0.95,
-            '\n'.join([
-                fr'{str(reprlib.repr(trace.label))}',
-                fr'n: {trace.n}',
-                fr'$\Delta U$: {span:.2f} [%]',
-            ]),
-            transform=ax_right.transAxes,
-            ha='right', va='top',
-        )
-        if xlim:
-            plt.xlim(xlim)
-        if ylim:
-            plt.ylim(ylim)
-        plt.xlabel(r'$U$ {units}'.format(units=trace.units.label))
-        plt.ylabel(r'$dU / d\tau$')
-        plt.grid(color='grey', linestyle=':')
-
-        filedir = create_directory(ROOT / 'img', label=trace.label)
-        filepath = filedir / f'nonlinearity-jnorm ({trace.n}).png'
-        plt.savefig(filepath)
-
-        plt.show()
-
-    return result.xi, span
+    return JNormNonlinearityResult(
+        trace=trace,
+        model=model,
+        dark_current=dark_current,
+        value=span,
+        k=k,
+    )
 
 
 def _calculate_intersection(
     u: Array[float],
-    u_grad: Array[float],
+    gradient: GradientResult,
     threshold: float,
 ) -> float | None:
 
-    diff = u_grad - threshold
+    diff = gradient.value - threshold
     exact_indexes = np.argwhere(diff == 0).ravel()
     if len(exact_indexes) > 0:
         return float(u[exact_indexes[-1]])
@@ -135,7 +175,7 @@ def _calculate_intersection(
 
     i = int(crossing_indexes[-1])
     x0, x1 = u[i], u[i + 1]
-    y0, y1 = u_grad[i], u_grad[i + 1]
+    y0, y1 = gradient.value[i], gradient.value[i + 1]
     if y1 == y0:
         x_intersection = float(x0)
     else:

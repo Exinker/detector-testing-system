@@ -1,7 +1,7 @@
-from detector_testing_system.characteristic.nonlinearity.calculators import (
+from .calculators import (
     calculate_nonlinearity,
 )
-from detector_testing_system.characteristic.nonlinearity.nonlinearity import (
+from .nonlinearity import (
     compare_nonlinearity,
     research_nonlinearity,
 )

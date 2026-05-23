@@ -1,4 +1,3 @@
-import reprlib
 from typing import Any, Mapping
 
 import matplotlib.pyplot as plt
@@ -39,7 +38,7 @@ class Datum:
 
     @property
     def label(self) -> str:
-        return f'{self.tau}'
+        return str(self.tau)
 
     @property
     def n_times(self) -> int:
@@ -55,7 +54,7 @@ class Datum:
 
         plt.plot(
             self.u,
-            label=reprlib.repr(self.label),
+            label=self.label,
         )
 
         plt.xlabel(r'$number$')

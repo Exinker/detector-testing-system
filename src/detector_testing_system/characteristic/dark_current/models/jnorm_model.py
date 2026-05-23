@@ -2,7 +2,10 @@ import numpy as np
 
 from vmk_spectrum3_wrapper.types import Array
 
-from detector_testing_system.characteristic.gradient import calculate_gradient
+from detector_testing_system.characteristic.gradient import (
+    GradientResult,
+    calculate_gradient,
+)
 from detector_testing_system.data import Trace
 from detector_testing_system.experiment import EmptyArrayError
 
@@ -24,16 +27,16 @@ class JNormDarkCurrentModel(DarkCurrentModelABC):
 
     def fit(self, trace: Trace) -> DarkCurrentResult:
 
-        u_grad = calculate_gradient(trace=trace)
+        gradient = calculate_gradient(trace=trace)
         mask = self._create_mask(
-            u_grad=u_grad,
+            gradient=gradient,
         )
         if sum(mask) == 0:
             raise EmptyArrayError(
                 message=f'Data don\'t enough to be fitted! Linear fit calculation was failed in cell {trace.n}.',
             )
 
-        value = float(np.mean(np.asarray(u_grad)[mask]))
+        value = float(np.mean(gradient.value[mask]))
         bias = float(np.mean(trace.u[mask] - value * trace.tau[mask]))
 
         xi = self._calculate_xi(
@@ -51,14 +54,14 @@ class JNormDarkCurrentModel(DarkCurrentModelABC):
 
     def _create_mask(
         self,
-        u_grad: Array[float],
+        gradient: GradientResult,
     ) -> Array[bool]:
-        n_points = len(u_grad)
+        n_points = len(gradient.value)
 
         mask = np.full(n_points, False)
         for n in range(n_points - self.min_points + 1):
 
-            if self._relative_std(u_grad[n:]) <= self.epsilon:
+            if self._relative_std(gradient.value[n:]) <= self.epsilon:
                 mask[n:] = True
                 return mask
 

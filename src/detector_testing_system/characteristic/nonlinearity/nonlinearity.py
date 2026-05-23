@@ -1,4 +1,4 @@
-import reprlib
+import logging
 from collections.abc import Sequence
 
 import matplotlib.pyplot as plt
@@ -12,9 +12,13 @@ from detector_testing_system.characteristic.dark_current.models import (
     DarkCurrentModelABC,
 )
 from detector_testing_system.characteristic.nonlinearity.calculators import calculate_nonlinearity
-from detector_testing_system.data import Data, load_data
+from detector_testing_system.characteristic.nonlinearity.results import NonlinearityResearchResult
+from detector_testing_system.data import Data, Trace
 from detector_testing_system.experiment import EmptyArrayError
-from detector_testing_system.experiment.utils import create_directory
+from detector_testing_system.types import AxesView
+
+LOGGER = logging.getLogger(__name__)
+CMAP = plt.get_cmap('tab10')
 
 
 def research_nonlinearity(
@@ -22,133 +26,74 @@ def research_nonlinearity(
     model: DarkCurrentModelABC | None = None,
     mask: Array[bool] | None = None,
     verbose: bool = False,
-    show: bool = False,
-    bins: int | Sequence = 40,
     **kwargs,
-) -> Array[float]:
+) -> NonlinearityResearchResult:
+    model = model or BaseDarkCurrentModel()
     mask = np.full(data.n_numbers, True) if mask is None else mask
 
-    nonlinearity = np.full(data.n_numbers, np.nan)
+    value = np.full(data.n_numbers, np.nan)
     for n, *_ in np.argwhere(mask):
         try:
-            _, value = calculate_nonlinearity(
+            result = calculate_nonlinearity(
                 trace=data.trace(n),
                 model=model,
                 **kwargs,
             )
+            value[n] = result.value
         except EmptyArrayError as error:
-            value = float(np.nan)
-
             if verbose:
-                print(error)
-        finally:
-            nonlinearity[n] = value
+                LOGGER.error(
+                    'Calculate nonlinearity (n: %d): %s',
+                    n,
+                    error,
+                )
+            value[n] = float(np.nan)
 
-    if show:
-        fig, (ax_left, ax_right) = plt.subplots(nrows=1, ncols=2, figsize=(12, 4))
-
-        plt.sca(ax_left)
-        ax_left.text(
-            0.05/2, 0.95,
-            '\n'.join([
-                reprlib.repr(data.label),
-                'method: {method}'.format(
-                    method=getattr(model, 'name', 'base'),
-                ),
-            ]),
-            transform=ax_left.transAxes,
-            ha='left', va='top',
-        )
-        plt.scatter(
-            range(data.n_numbers), nonlinearity,
-            c='red', s=10,
-            label=r'$U$',
-        )
-        plt.xlabel(r'number')
-        plt.ylabel({
-            'base': r'$\alpha$ [%]',
-            'jnorm': r'$\Delta U$ [%]',
-        }[getattr(model, 'name', 'base')])
-        plt.grid(color='grey', linestyle=':')
-
-        plt.sca(ax_right)
-        plt.hist(
-            nonlinearity[~np.isnan(nonlinearity)],
-            bins=bins,
-            edgecolor='black', facecolor='white',
-            # fill=False,
-        )
-        plt.xlabel({
-            'base': r'$\alpha$ [%]',
-            'jnorm': r'$\Delta U$ [%]',
-        }[getattr(model, 'name', 'base')])
-
-        plt.show()
-
-    return nonlinearity
+    return NonlinearityResearchResult(
+        data=data,
+        model=model,
+        value=value,
+    )
 
 
 def compare_nonlinearity(
-    labels: Sequence[str],
-    n: int,
+    traces: Sequence[Trace],
     model: DarkCurrentModelABC | None = None,
-    xlim: tuple[float, float] = None,
-    ylim: tuple[float, float] = None,
+    views: Sequence[AxesView | None] | None = None,
+    verbose: bool = False,
     **kwargs,
 ) -> None:
     model = model or BaseDarkCurrentModel()
+    view_left, view_right = views or [None, None]
 
     fig, (ax_left, ax_right) = plt.subplots(nrows=1, ncols=2, figsize=(12, 4))
-    for label in labels:
-        data = load_data(
-            label=label,
-        )
+    for i, trace in enumerate(traces):
+        color = CMAP(i % 10)
 
-        trace = data.trace(n)
-        xi, _ = calculate_nonlinearity(
+        result = calculate_nonlinearity(
             trace=trace,
             model=model,
             **kwargs,
         )
-
-        plt.sca(ax_left)
-        plt.scatter(
-            trace.tau, trace.u,
-            s=10,
-            label=label.split(' ')[0],
+        result._plot_left(
+            ax_left,
+            view_left,
+            color=color,
+            verbose=verbose,
+            hat_label=None,
         )
-        plt.xlabel(r'$\tau$ [ms]')
-        plt.ylabel(r'$U$ {units}'.format(units=data.units.label))
-        plt.grid(color='grey', linestyle=':')
-        plt.legend()
-
-        plt.sca(ax_right)
-        plt.scatter(
-            trace.u, xi,
-            s=10,
-            label=label.split(' ')[0],
+        result._plot_right(
+            ax_right,
+            view_right,
+            color=color,
+            verbose=verbose,
         )
-        ax_right.text(
-            0.95, 0.95,
-            'method: {method}'.format(
-                method=getattr(model, 'name', 'base'),
-            ),
-            transform=ax_right.transAxes,
-            ha='right', va='top',
-        )
-        if xlim:
-            plt.xlim(xlim)
-        if ylim:
-            plt.ylim(ylim)
-        plt.xlabel(r'$U$ {units}'.format(units=data.units.label))
-        plt.ylabel(r'$error$ [%]')
-        plt.grid(color='grey', linestyle=':')
-        plt.legend()
 
-    filedir = create_directory(ROOT / 'img', label=trace.label)
-    filepath = filedir / 'nonlinearities ({method}), {n}).png'.format(
-        method=getattr(model, 'name', 'base'),
-        n=n,
+    filedir = ROOT / 'img'
+    filedir.mkdir(parents=True, exist_ok=True)
+    filepath = filedir / 'nonlinearity-{method} {n}.png'.format(
+        method=model.name,
+        n='x'.join([str(trace.n) for trace in traces]),
     )
     plt.savefig(filepath)
 

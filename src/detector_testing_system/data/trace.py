@@ -1,9 +1,9 @@
 from dataclasses import dataclass
 
-import numpy as np
-
 from vmk_spectrum3_wrapper.types import Array, MilliSecond, Number, U
 from vmk_spectrum3_wrapper.units import Units
+
+from detector_testing_system.data.label import Label
 
 
 @dataclass
@@ -13,5 +13,5 @@ class Trace:
     variance: Array[U]
     tau: Array[MilliSecond]
     n: Number
-    label: str
+    label: Label
     units: Units

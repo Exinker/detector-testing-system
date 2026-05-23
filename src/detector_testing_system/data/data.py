@@ -1,5 +1,5 @@
+import os
 import pickle
-import reprlib
 from collections.abc import Sequence
 from typing import Any, Mapping
 
@@ -18,6 +18,7 @@ from vmk_spectrum3_wrapper.units import Units
 
 from detector_testing_system import ROOT
 from detector_testing_system.data.datum import Datum
+from detector_testing_system.data.label import Label
 from detector_testing_system.data.trace import Trace
 
 
@@ -36,11 +37,11 @@ class Data:
     def __init__(
         self,
         __data: Sequence[Datum],
-        label: str = '',
+        label: str | Label,
     ) -> None:
 
         self.data = tuple(__data)
-        self.label = label
+        self.label = label if isinstance(label, Label) else Label(label)
 
         self._u = None
         self._variance = None
@@ -110,12 +111,12 @@ class Data:
 
         plt.plot(
             self.u.T,
-            label=[reprlib.repr(datum.label) for datum in self.data],
+            label=[datum.label for datum in self.data],
         )
-        ax.text(
+        plt.text(
             0.95, 0.95,
             '\n'.join([
-                fr'{str(reprlib.repr(self.label))}',
+                self.label.prefix,
             ]),
             transform=ax.transAxes,
             ha='right', va='top',
