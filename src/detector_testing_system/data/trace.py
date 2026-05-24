@@ -47,8 +47,8 @@ class Trace:
                 ha='left', va='top',
             )
 
-        plt.xlabel(r'$\tau$ {units}'.format(units=r'[$ms$]'))
-        plt.ylabel(r'$U$ {units}'.format(units=self.units.label))
+        plt.xlabel(r'$\tau$ [{units}]'.format(units=r'$ms$'))
+        plt.ylabel(r'$U$ [{units}]'.format(units=self.units.label))
 
         plt.grid(color='grey', linestyle=':')
 

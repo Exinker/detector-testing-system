@@ -1,45 +1,57 @@
 import numpy as np
+from numpy.testing import assert_allclose
+
+from vmk_spectrum3_wrapper.types import U
 
 from detector_testing_system.characteristic.bias import calculate_bias, research_bias
-from detector_testing_system.data import Trace
 
-from tests.conftest import assert_value_in_3sigma_interval
+from tests.conftest import assert_mean_close
 
 
-def test_calculate_bias_for_noiseless_signal(data_model, bias):
+def test_calculate_bias_noiseless(
+    data_model,
+    bias: U,
+):
     data = data_model(
         is_noised=False,
-        is_lighted=True,
     )
     n = 0
-    trace = data.trace(n)
 
-    value = calculate_bias(trace, threshold=(0, 100))
+    result = calculate_bias(
+        trace=data.trace(n),
+    )
 
-    assert np.isclose(value, bias)
+    assert np.isclose(result.value, bias)
 
 
-def test_research_bias_for_noisy_detector_report(data_model, bias):
+def test_research_bias(
+    data_model,
+    bias: U,
+):
     data = data_model(
         is_noised=True,
-        is_lighted=True,
     )
 
-    values = research_bias(data, threshold=(0, 100))
+    result = research_bias(
+        data,
+    )
 
-    assert len(values) == 4096
-    assert_value_in_3sigma_interval(values, bias)
+    assert_mean_close(result.value, bias, k=3)
 
 
-def test_research_bias_for_noiseless_detector(data_model, bias):
+def test_research_bias_noiseless(
+    data_model,
+    bias: U,
+):
     data = data_model(
         is_noised=False,
-        is_lighted=True,
     )
 
-    values = research_bias(data, threshold=(0, 100))
+    result = research_bias(
+        data,
+    )
 
-    np.testing.assert_allclose(
-        values,
+    assert_allclose(
+        result.value,
         np.full(data.n_numbers, bias),
     )

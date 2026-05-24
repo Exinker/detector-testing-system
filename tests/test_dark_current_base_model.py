@@ -3,7 +3,7 @@ from types import SimpleNamespace
 import numpy as np
 import pytest
 
-from detector_testing_system.characteristic.dark_current.models import (
+from detector_testing_system.characteristic.dark_current import (
     BaseDarkCurrentModel,
     JNormDarkCurrentModel,
 )
@@ -36,9 +36,7 @@ def create_jnorm_trace() -> Trace:
 
 def test_base_dark_current_model_uses_default_filter() -> None:
     trace = create_trace()
-    expected = filter_trace_factory(
-        threshold=(0, trace.units.value_max),
-    )(trace)
+    expected = filter_trace_factory()(trace)
 
     result = BaseDarkCurrentModel(weighted=False).fit(trace)
 

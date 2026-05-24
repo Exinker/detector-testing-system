@@ -1,75 +1,28 @@
 import logging
-from abc import ABC, abstractmethod
 from collections.abc import Sequence
 from dataclasses import dataclass
 
 import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.axes import Axes
+from tqdm.notebook import tqdm
 
-from vmk_spectrum3_wrapper.types import Array, Number, U
+from vmk_spectrum3_wrapper.types import Array, Number
 
 from detector_testing_system import ROOT
-from detector_testing_system.characteristic.dark_current.models import (
+from detector_testing_system.characteristic.dark_current import (
+    BaseDarkCurrentModel,
     DarkCurrentModelABC,
-    DarkCurrentResult,
+)
+from detector_testing_system.characteristic.nonlinearity.nonlinearity import (
+    calculate_nonlinearity,
 )
 from detector_testing_system.data import Data, Trace
+from detector_testing_system.experiment import FitError
 from detector_testing_system.types import AxesView
 
-
 LOGGER = logging.getLogger(__name__)
-
-
-@dataclass
-class NonlinearityResultABC(ABC):
-
-    trace: Trace
-    model: DarkCurrentModelABC
-    dark_current: DarkCurrentResult
-    value: float
-
-    def show(
-        self,
-        views: Sequence[AxesView | None] | None = None,
-        verbose: bool = False,
-    ) -> None:
-        view_left, view_right = views or [{}, {}]
-
-        fig, (ax_left, ax_right) = plt.subplots(nrows=1, ncols=2, figsize=(12, 4))
-
-        self._plot_left(ax_left, view_left, verbose=verbose)
-        self._plot_right(ax_right, view_right, verbose=verbose)
-
-        filedir = ROOT / 'img' / self.trace.label
-        filedir.mkdir(parents=True, exist_ok=True)
-        filename = 'nonlinearity-{name} ({n}).png'.format(
-            name=self.model.name,
-            n=self.trace.n,
-        )
-        plt.savefig(filedir / filename)
-
-        plt.show()
-
-    @abstractmethod
-    def _plot_left(
-        self,
-        ax: Axes,
-        view: AxesView | None,
-        color: str | None = None,
-        verbose: bool = False,
-    ) -> None:
-        pass
-
-    @abstractmethod
-    def _plot_right(
-        self,
-        ax: Axes,
-        view: AxesView | None,
-        color: str | None = None,
-        verbose: bool = False,
-    ) -> None:
-        pass
+CMAP = plt.get_cmap('tab10')
 
 
 @dataclass
@@ -156,3 +109,83 @@ class NonlinearityResearchResult:
         }[getattr(self.model, 'name', 'base')])
 
         ax.set(**view)
+
+
+def research_nonlinearity(
+    data: Data,
+    model: DarkCurrentModelABC | None = None,
+    mask: Array[bool] | None = None,
+    verbose: bool = False,
+    **kwargs,
+) -> NonlinearityResearchResult:
+    model = model or BaseDarkCurrentModel()
+    mask = np.full(data.n_numbers, True) if mask is None else mask
+
+    value = np.full(data.n_numbers, np.nan)
+    for n, *_ in tqdm(np.argwhere(mask)):
+        try:
+            result = calculate_nonlinearity(
+                trace=data.trace(n),
+                model=model,
+                **kwargs,
+            )
+            value[n] = result.value
+        except FitError as error:
+            if verbose:
+                LOGGER.error(
+                    'Calculate nonlinearity (n: %d): %s',
+                    n,
+                    error,
+                )
+            value[n] = float(np.nan)
+
+    return NonlinearityResearchResult(
+        data=data,
+        model=model,
+        value=value,
+    )
+
+
+def compare_nonlinearity(
+    __traces: Sequence[tuple[Trace, str]],
+    model: DarkCurrentModelABC | None = None,
+    views: Sequence[AxesView | None] | None = None,
+    verbose: bool = False,
+    **kwargs,
+) -> None:
+    model = model or BaseDarkCurrentModel()
+    view_left, view_right = views or [None, None]
+
+    fig, (ax_left, ax_right) = plt.subplots(nrows=1, ncols=2, figsize=(12, 4))
+    for i, (trace, label) in enumerate(__traces):
+        color = CMAP(i % 10)
+
+        result = calculate_nonlinearity(
+            trace=trace,
+            model=model,
+            **kwargs,
+        )
+        result._plot_left(
+            ax_left,
+            view_left,
+            color=color,
+            verbose=verbose,
+            label=label,
+            hat_label=None,
+        )
+        result._plot_right(
+            ax_right,
+            view_right,
+            color=color,
+            verbose=verbose,
+        )
+
+    filedir = ROOT / 'img'
+    filedir.mkdir(parents=True, exist_ok=True)
+    filepath = filedir / 'nonlinearity-{method} {n}.png'.format(
+        method=model.name,
+        n='x'.join([str(trace.n) for trace, _ in __traces]),
+    )
+    plt.savefig(filepath)
+
+    plt.show()

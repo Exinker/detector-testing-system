@@ -70,7 +70,7 @@ def calculate_efficiency(
         plt.text(
             0.05/2, 0.95,
             '\n'.join([
-                r'$U_{{b}}$: {bias:.4f} {units}'.format(
+                r'$U_{{b}}$: {bias:.4f} [{units}]'.format(
                     bias=bias,
                     units=trace.units.label,
                 ),
@@ -84,7 +84,7 @@ def calculate_efficiency(
             transform=ax.transAxes,
             ha='left', va='top',
         )
-        plt.xlabel(r'$U$ {units}'.format(units=trace.units.label))
+        plt.xlabel(r'$U$ [{units}]'.format(units=trace.units.label))
         plt.ylabel(r'$\sigma^{2}$')
         plt.grid(color='grey', linestyle=':')
 

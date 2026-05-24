@@ -13,7 +13,7 @@ from detector_testing_system.types import AxesView
 
 
 @dataclass
-class GradientResult:
+class Gradient:
 
     trace: Trace
     value: Array[float]
@@ -73,7 +73,7 @@ class GradientResult:
             )
 
         plt.xlabel(r'$\tau$ [ms]')
-        plt.ylabel(r'$U$ {units}'.format(units=self.trace.units.label))
+        plt.ylabel(r'$U$ [{units}]'.format(units=self.trace.units.label))
 
         plt.grid(color='grey', linestyle=':')
         plt.legend()
@@ -104,7 +104,7 @@ class GradientResult:
                 ha='right', va='top',
             )
 
-        plt.xlabel(r'$U$ {units}'.format(units=self.trace.units.label))
+        plt.xlabel(r'$U$ [{units}]'.format(units=self.trace.units.label))
         plt.ylabel(r'$dU / d\tau$')
 
         plt.grid(color='grey', linestyle=':')
@@ -114,12 +114,12 @@ class GradientResult:
 
 def calculate_gradient(
     trace: Trace,
-) -> GradientResult:
+) -> Gradient:
     """Calculate gradient"""
 
     value = np.gradient(trace.u, trace.tau)
 
-    return GradientResult(
+    return Gradient(
         trace=trace,
         value=value,
     )

@@ -9,9 +9,10 @@ import pytest
 from faker import Faker
 
 ROOT = Path(__file__).resolve().parents[1]
-SRC = ROOT / 'src'
-if str(SRC) not in sys.path:
-    sys.path.insert(0, str(SRC))
+SOURCE = ROOT / 'src'
+
+if str(SOURCE) not in sys.path:
+    sys.path.insert(0, str(SOURCE))
 
 
 def _stub_module(name, **attrs):
@@ -101,7 +102,7 @@ if importlib.util.find_spec('vmk_spectrum3_wrapper') is None:
 
 from vmk_spectrum3_wrapper.units import Units
 
-from detector_testing_system.experiment.data.data import Data, Datum
+from detector_testing_system.data import Data, Datum
 
 
 @dataclass
@@ -132,9 +133,9 @@ class DataModel:
             variance = self._variance(average, parameters)
             intensity = self._intensity(average, variance, rng)
 
-            data.append(Datum(
+            data.append(Datum.create(
                 intensity=intensity,
-                exposure=float(tau),
+                tau=float(tau),
                 n_frames=self.n_frames,
                 started_at=float(index),
                 units=self.units,
@@ -190,13 +191,13 @@ def _normalized_frames(n_frames: int) -> np.ndarray:
     return (frames - np.mean(frames)) / np.std(frames, ddof=1)
 
 
-def assert_value_in_3sigma_interval(values: np.ndarray, value: float) -> None:
+def assert_mean_close(values: np.ndarray, value: float, k: int = 3) -> None:
     values = np.asarray(values, dtype=float)
     values = values[~np.isnan(values)]
     mean = np.mean(values)
     sem = np.std(values, ddof=1) / np.sqrt(len(values))
 
-    assert np.isclose(value, mean, atol=3 * sem)
+    assert np.isclose(value, mean, atol=k*sem)
 
 
 def _fake_float(seed: int, min_value: float, max_value: float) -> float:
