@@ -10,7 +10,7 @@ from detector_testing_system.characteristic.dark_current.models import (
 from detector_testing_system.data import Data, Trace
 from detector_testing_system.experiment import EmptyArrayError
 from detector_testing_system.utils import (
-    calculate_bounds,
+    calculate_outlier_bounds,
     calculate_stats,
     trunk_outliers,
 )
@@ -96,7 +96,7 @@ def research_dark_current(
             dark_current[n] = value
 
     if show:
-        lb, ub = calculate_bounds(dark_current, k=3)
+        lb, ub = calculate_outlier_bounds(dark_current, k=3)
         dark_current_trunked = trunk_outliers(dark_current, (lb, ub))
         mean, ci = calculate_stats(dark_current_trunked, confidence=confidence)
 

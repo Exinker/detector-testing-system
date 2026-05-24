@@ -13,7 +13,7 @@ from detector_testing_system.data import Data, Trace
 from detector_testing_system.experiment import EmptyArrayError
 from detector_testing_system.utils import (
     calculate_stats,
-    normalize_values,
+    normalize,
     trunk_outliers,
 )
 
@@ -167,7 +167,7 @@ def research_efficiency(
     if show and False:  # deprecated functionality
         values = efficiency.copy()[~np.isnan(efficiency)]
         values = trunk_outliers(values)
-        values = normalize_values(values)
+        values = normalize(values)
 
         # show
         dfit = distfit(

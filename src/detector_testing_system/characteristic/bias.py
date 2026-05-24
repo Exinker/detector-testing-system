@@ -1,3 +1,5 @@
+from typing import Callable
+
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -13,13 +15,12 @@ DEGREE = 1
 
 def calculate_bias(
     trace: Trace,
-    threshold: tuple[float, float],
+    filter: Callable[[Trace], Array[bool]],
     show: bool = False,
 ) -> float:
     """Calculate a bias of the cell"""
 
-    lb, ub = threshold
-    mask = (lb < trace.u) & (trace.u < ub)
+    mask = filter(trace)
     if len(np.argwhere(mask)) < DEGREE + 1:
         raise EmptyArrayError(
             message=f'Data don\'t enough to be fitted! Bias calculation was failed in cell {trace.n}.',
@@ -75,20 +76,19 @@ def calculate_bias(
 
 def research_bias(
     data: Data,
-    threshold: tuple[float, float] | None = None,
+    filter: Callable[[Trace], Array[bool]],
     confidence: float = .95,
     verbose: bool = False,
     show: bool = False,
 ) -> Array[float]:
     """Calculate a bias of the cells"""
-    threshold = threshold or (0, data.units.value_max)
 
     bias = np.zeros(data.n_numbers)
     for n in range(data.n_numbers):
         try:
             value = calculate_bias(
                 trace=data.trace(n),
-                threshold=threshold,
+                filter=filter,
             )
         except EmptyArrayError as error:
             value = float(np.nan)
