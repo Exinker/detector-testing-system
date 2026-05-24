@@ -1,20 +1,28 @@
 from abc import ABC, abstractmethod
+from collections.abc import Sequence
 from dataclasses import dataclass
 
+import matplotlib.pyplot as plt
 import numpy as np
+from matplotlib.axes import Axes
 
 from vmk_spectrum3_wrapper.types import Array, MilliSecond, U
 
-from detector_testing_system.data import Trace
-from detector_testing_system.experiment import EmptyArrayError
+from detector_testing_system import ROOT
+from detector_testing_system.data import TraceFilter, Trace
+from detector_testing_system.experiment import FitArrayError
+from detector_testing_system.types import AxesView
+from detector_testing_system.utils import filter_factory
 
 
 @dataclass
 class DarkCurrentResult:
 
+    trace: Trace
+    model: 'DarkCurrentModelABC'
+    mask: Array[bool]
     value: float
     bias: float
-    mask: Array[bool]
     xi: Array[U]
 
     @property
@@ -24,8 +32,151 @@ class DarkCurrentResult:
     def interpolate(self, __exposure: Array[MilliSecond]) -> Array[U]:
         return np.polyval(self.p, __exposure)
 
+    def show(
+        self,
+        views: Sequence[AxesView | None] | None = None,
+        color: str | None = None,
+        verbose: bool = False,
+    ) -> None:
+        view_left, view_right = views or [{}, {}]
+
+        fig, (ax_left, ax_right) = plt.subplots(nrows=1, ncols=2, figsize=(12, 4))
+
+        self._plot_left(
+            ax_left,
+            view_left,
+            color=color,
+            verbose=verbose,
+        )
+        self._plot_right(
+            ax_right,
+            view_right,
+            color=color,
+            verbose=verbose,
+        )
+
+        filedir = ROOT / 'img' / self.trace.label
+        filedir.mkdir(parents=True, exist_ok=True)
+        filename = 'dark-current-{name} ({n}).png'.format(
+            name=self.model.name,
+            n=self.trace.n,
+        )
+        plt.savefig(filedir / filename)
+
+        plt.show()
+
+    def _plot_left(
+        self,
+        ax: Axes,
+        view: AxesView,
+        color: str | None = None,
+        verbose: bool = False,
+    ) -> None:
+        view = view or {}
+        color = color or 'red'
+
+        plt.sca(ax)
+        plt.scatter(
+            self.trace.tau, self.trace.u,
+            c='grey', s=10,
+        )
+        plt.scatter(
+            self.trace.tau[self.mask], self.trace.u[self.mask],
+            c=color, s=10,
+            label=rf'$U_{{{self.trace.n}}}$',
+        )
+        plt.plot(
+            self.trace.tau, self.interpolate(self.trace.tau),
+            color='black', linestyle='-', linewidth=1,
+        )
+        if verbose:
+            plt.text(
+                0.05/2, 0.95,
+                '\n'.join([
+                    r'$i$: {value:.4f} {units}'.format(
+                        value=1e+3*self.value,  # in %/s
+                        units=f'[{self.trace.units.label}/s]',
+                    ),
+                ]),
+                transform=ax.transAxes,
+                ha='left', va='top',
+            )
+
+        plt.xlabel(r'$\tau$ {units}'.format(units=r'[$ms$]'))
+        plt.ylabel(r'$U$ {units}'.format(units=self.trace.units.label))
+
+        plt.grid(color='grey', linestyle=':')
+        plt.legend()
+
+        ax.set(**view)
+
+    def _plot_right(
+        self,
+        ax: Axes,
+        view: AxesView,
+        color: str | None = None,
+        verbose: bool = False,
+    ) -> None:
+        view = view or {}
+        color = color or 'red'
+
+        plt.sca(ax)
+        plt.scatter(
+            self.trace.u, self.xi,
+            c='grey', s=10,
+        )
+        plt.scatter(
+            self.trace.u[self.mask], self.xi[self.mask],
+            c=color, s=10,
+            label=rf'$U_{{{self.trace.n}}}$',
+        )
+        if verbose:
+            plt.text(
+                0.95, 0.95,
+                '\n'.join([
+                    self.trace.label.prefix,
+                    fr'$\alpha: {{{self.value:.2f}}}$ [%]',
+                ]),
+                transform=ax.transAxes,
+                ha='right', va='top',
+            )
+            plt.text(
+                0.95, 0.05/2,
+                '\n'.join([
+                    r'$error = 100\frac{\hat{U} - U_{i}}{a \tau}$',
+                ]),
+                transform=ax.transAxes,
+                ha='right', va='bottom',
+            )
+        if verbose:
+            plt.text(
+                0.05/2, 0.95,
+                '\n'.join([
+                    r'$i$: {value:.4f} {units}'.format(
+                        value=1e+3*self.value,  # in %/s
+                        units=f'[{self.trace.units.label}/s]',
+                    ),
+                ]),
+                transform=ax.transAxes,
+                ha='left', va='top',
+            )
+
+        plt.xlabel(r'$\tau$ {units}'.format(units=r'[$ms$]'))
+        plt.ylabel(r'$\xi$ {units}'.format(units=self.trace.units.label))
+
+        plt.grid(color='grey', linestyle=':')
+
+        ax.set(**view)
+ 
 
 class DarkCurrentModelABC(ABC):
+
+    def __init__(
+        self,
+        filter: TraceFilter | None = None,
+    ) -> None:
+
+        self.filter = filter or filter_factory()
 
     def __init_subclass__(cls, *args, **kwargs):
 
@@ -61,24 +212,20 @@ class BaseDarkCurrentModel(DarkCurrentModelABC):
     def __init__(
         self,
         weighted: bool = True,
-        threshold: tuple[U, U] | None = None,
-        span: tuple[MilliSecond, MilliSecond] = None,
+        filter: TraceFilter | None = None,
     ) -> None:
+        super().__init__(filter=filter)
 
         self.weighted = weighted
-        self.threshold = threshold
-        self.span = span
 
     def fit(
         self,
         trace: Trace,
     ) -> DarkCurrentResult:
-        threshold = self.threshold or (0, trace.units.value_max)
-        span = self.span or (min(trace.tau), max(trace.tau))
 
-        mask = (trace.u >= threshold[0]) & (trace.u <= threshold[1]) & (trace.tau >= span[0]) & (trace.tau <= span[1])
+        mask = self.filter(trace)
         if sum(mask) < self.degree + 1:
-            raise EmptyArrayError(
+            raise FitArrayError(
                 message=f'Data don\'t enough to be fitted! Linear fit calculation was failed in cell {trace.n}.',
             )
 
@@ -97,6 +244,8 @@ class BaseDarkCurrentModel(DarkCurrentModelABC):
         )
 
         return DarkCurrentResult(
+            trace=trace,
+            model=self,
             value=float(p[0]),
             bias=float(p[1]),
             mask=mask,

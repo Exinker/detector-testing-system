@@ -10,5 +10,5 @@ class BaseDataError(Exception):
         return self.message
 
 
-class EmptyArrayError(BaseDataError):
+class FitArrayError(BaseDataError):
     pass

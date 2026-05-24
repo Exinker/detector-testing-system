@@ -6,7 +6,7 @@ import numpy as np
 from vmk_spectrum3_wrapper.types import Array
 
 from detector_testing_system.data import Data, Trace
-from detector_testing_system.experiment import EmptyArrayError
+from detector_testing_system.experiment import FitArrayError
 from detector_testing_system.utils import calculate_stats
 
 
@@ -22,7 +22,7 @@ def calculate_bias(
 
     mask = filter(trace)
     if len(np.argwhere(mask)) < DEGREE + 1:
-        raise EmptyArrayError(
+        raise FitArrayError(
             message=f'Data don\'t enough to be fitted! Bias calculation was failed in cell {trace.n}.',
         )
 
@@ -37,6 +37,7 @@ def calculate_bias(
         plt.scatter(
             trace.tau, trace.u,
             c='grey', s=10,
+            label=rf'$U_{{{trace.n}}}$',
         )
         plt.scatter(
             trace.tau[mask], trace.u[mask],
@@ -54,9 +55,6 @@ def calculate_bias(
         plt.text(
             0.05/2, 0.95,
             '\n'.join([
-                r'$n$: {n:.0f}'.format(
-                    n=trace.n,
-                ),
                 r'$U_{{b}}$: {bias:.4f} {units}'.format(
                     bias=bias,
                     units=trace.units.label,
@@ -90,7 +88,7 @@ def research_bias(
                 trace=data.trace(n),
                 filter=filter,
             )
-        except EmptyArrayError as error:
+        except FitArrayError as error:
             value = float(np.nan)
 
             if verbose:

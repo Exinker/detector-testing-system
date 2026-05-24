@@ -14,7 +14,7 @@ from detector_testing_system.characteristic.dark_current.models import (
 from detector_testing_system.characteristic.nonlinearity.calculators import calculate_nonlinearity
 from detector_testing_system.characteristic.nonlinearity.results import NonlinearityResearchResult
 from detector_testing_system.data import Data, Trace
-from detector_testing_system.experiment import EmptyArrayError
+from detector_testing_system.experiment import FitArrayError
 from detector_testing_system.types import AxesView
 
 LOGGER = logging.getLogger(__name__)
@@ -40,7 +40,7 @@ def research_nonlinearity(
                 **kwargs,
             )
             value[n] = result.value
-        except EmptyArrayError as error:
+        except FitArrayError as error:
             if verbose:
                 LOGGER.error(
                     'Calculate nonlinearity (n: %d): %s',

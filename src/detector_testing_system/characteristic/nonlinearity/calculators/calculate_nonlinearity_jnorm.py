@@ -40,18 +40,21 @@ class JNormNonlinearityResult(NonlinearityResultABC):
         view = view or {}
         color = color or 'red'
 
+        trace = self.dark_current.trace
+        mask = self.dark_current.mask
+
         plt.sca(ax)
         plt.scatter(
-            self.trace.tau, self.trace.u,
+            trace.tau, trace.u,
             c='grey', s=10,
         )
         plt.scatter(
-            self.trace.tau[self.dark_current.mask], self.trace.u[self.dark_current.mask],
+            trace.tau[mask], trace.u[mask],
             c=color, s=10,
-            label=rf'$U_{{{self.trace.n}}}$',
+            label=rf'$U_{{{trace.n}}}$',
         )
         plt.plot(
-            self.trace.tau, self.dark_current.interpolate(self.trace.tau),
+            trace.tau, self.dark_current.interpolate(trace.tau),
             color='black', linestyle='solid', linewidth=1,
             label=hat_label,
         )
@@ -67,7 +70,7 @@ class JNormNonlinearityResult(NonlinearityResultABC):
             )
 
         plt.xlabel(r'$\tau$ [ms]')
-        plt.ylabel(r'$U$ {units}'.format(units=self.trace.units.label))
+        plt.ylabel(r'$U$ {units}'.format(units=trace.units.label))
 
         plt.grid(color='grey', linestyle=':')
         plt.legend()
@@ -84,17 +87,19 @@ class JNormNonlinearityResult(NonlinearityResultABC):
         view = view or {}
         color = color or 'red'
 
-        gradient = calculate_gradient(trace=self.trace)
+        trace = self.dark_current.trace
+        gradient = calculate_gradient(trace=trace)
+        mask = self.dark_current.mask
 
         plt.sca(ax)
         plt.scatter(
-            self.trace.u, gradient.value,
+            trace.u, gradient.value,
             c='grey', s=10,
         )
         plt.scatter(
-            self.trace.u[self.dark_current.mask], gradient.value[self.dark_current.mask],
+            trace.u[mask], gradient.value[mask],
             c=color, s=10,
-            label=rf'$U_{{{self.trace.n}}}$',
+            label=rf'$U_{{{trace.n}}}$',
         )
         plt.axhline(
             self.dark_current.value,
@@ -106,8 +111,8 @@ class JNormNonlinearityResult(NonlinearityResultABC):
                 color='red', linestyle='--', linewidth=1,
             )
             plt.axvspan(
-                self.trace.u[0],
-                self.trace.u[0] + self.value,
+                trace.u[0],
+                trace.u[0] + self.value,
                 color='grey',
                 alpha=.125,
             )
@@ -115,14 +120,14 @@ class JNormNonlinearityResult(NonlinearityResultABC):
             plt.text(
                 0.95, 0.95,
                 '\n'.join([
-                    self.trace.label.prefix,
+                    trace.label.prefix,
                     fr'$\Delta U$: {self.value:.2f} [%]',
                 ]),
                 transform=ax.transAxes,
                 ha='right', va='top',
             )
 
-        plt.xlabel(r'$U$ {units}'.format(units=self.trace.units.label))
+        plt.xlabel(r'$U$ {units}'.format(units=trace.units.label))
         plt.ylabel(r'$dU / d\tau$')
 
         plt.grid(color='grey', linestyle=':')
@@ -150,8 +155,6 @@ def calculate_nonlinearity_jnorm(
         span = x_intersection - trace.u[0]
 
     return JNormNonlinearityResult(
-        trace=trace,
-        model=model,
         dark_current=dark_current,
         value=span,
         k=k,
