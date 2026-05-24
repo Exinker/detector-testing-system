@@ -1,11 +1,7 @@
-from typing import Callable
-
 import numpy as np
 from scipy import stats
 
-from vmk_spectrum3_wrapper.types import Array, MilliSecond, U
-
-from detector_testing_system.data import Trace
+from vmk_spectrum3_wrapper.types import Array
 
 
 def calculate_stats(
@@ -55,25 +51,3 @@ def normalize(
     mean = np.mean(__value)
     std = np.std(__value, ddof=1)
     return (__value - mean) / std
-
-
-def filter_factory(
-    threshold: tuple[U, U] | None = None,
-    interval: tuple[MilliSecond, MilliSecond] | None = None,
-) -> Callable[[Trace], Array[bool]]:
-    threshold = threshold or (-np.inf, +np.inf)
-    interval = interval or (-np.inf, +np.inf)
-
-    def create_mask(
-        __value: Array[float],
-        lb: float,
-        ub: float,
-    ) -> Array[bool]:
-        return (__value >= lb) & (__value <= ub)
-
-    def inner(
-        trace: Trace,
-    ) -> Array[bool]:
-        return create_mask(trace.u, *threshold) & create_mask(trace.tau, *interval)
-
-    return inner

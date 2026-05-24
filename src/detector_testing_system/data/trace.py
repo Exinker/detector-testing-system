@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from typing import Callable
 
+import numpy as np
 import matplotlib.pyplot as plt
 
 from vmk_spectrum3_wrapper.types import Array, MilliSecond, Number, U
@@ -54,3 +55,25 @@ class Trace:
         ax.set(**view)
 
         plt.show()
+
+
+def filter_trace_factory(
+    threshold: tuple[U, U] | None = None,
+    interval: tuple[MilliSecond, MilliSecond] | None = None,
+) -> Callable[[Trace], Array[bool]]:
+    threshold = threshold or (-np.inf, +np.inf)
+    interval = interval or (-np.inf, +np.inf)
+
+    def create_mask(
+        __value: Array[float],
+        lb: float,
+        ub: float,
+    ) -> Array[bool]:
+        return (__value >= lb) & (__value <= ub)
+
+    def inner(
+        trace: Trace,
+    ) -> Array[bool]:
+        return create_mask(trace.u, *threshold) & create_mask(trace.tau, *interval)
+
+    return inner

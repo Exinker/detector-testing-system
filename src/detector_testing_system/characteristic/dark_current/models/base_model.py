@@ -9,10 +9,9 @@ from matplotlib.axes import Axes
 from vmk_spectrum3_wrapper.types import Array, MilliSecond, U
 
 from detector_testing_system import ROOT
-from detector_testing_system.data import TraceFilter, Trace
-from detector_testing_system.experiment import FitArrayError
+from detector_testing_system.data import Trace, TraceFilter, filter_trace_factory
+from detector_testing_system.experiment import FitError
 from detector_testing_system.types import AxesView
-from detector_testing_system.utils import filter_factory
 
 
 @dataclass
@@ -176,7 +175,7 @@ class DarkCurrentModelABC(ABC):
         filter: TraceFilter | None = None,
     ) -> None:
 
-        self.filter = filter or filter_factory()
+        self.filter = filter or filter_trace_factory()
 
     def __init_subclass__(cls, *args, **kwargs):
 
@@ -225,7 +224,7 @@ class BaseDarkCurrentModel(DarkCurrentModelABC):
 
         mask = self.filter(trace)
         if sum(mask) < self.degree + 1:
-            raise FitArrayError(
+            raise FitError(
                 message=f'Data don\'t enough to be fitted! Linear fit calculation was failed in cell {trace.n}.',
             )
 

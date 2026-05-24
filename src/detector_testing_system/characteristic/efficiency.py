@@ -10,7 +10,7 @@ from vmk_spectrum3_wrapper.types import Array
 
 from detector_testing_system.characteristic.bias import calculate_bias
 from detector_testing_system.data import Data, Trace
-from detector_testing_system.experiment import FitArrayError
+from detector_testing_system.experiment import FitError
 from detector_testing_system.utils import (
     calculate_stats,
     normalize,
@@ -31,7 +31,7 @@ def calculate_efficiency(
     lb, ub = threshold
     mask = (lb < trace.u) & (trace.u < ub)
     if len(np.argwhere(mask)) < DEGREE + 1:
-        raise FitArrayError(
+        raise FitError(
             message=f'Data don\'t enough to be fitted! Efficiency calculation was failed in cell {trace.n}.',
         )
 
@@ -111,7 +111,7 @@ def research_efficiency(
                 trace=data.trace(n),
                 threshold=threshold,
             )
-        except FitArrayError as error:
+        except FitError as error:
             value = float(np.nan)
 
             if verbose:

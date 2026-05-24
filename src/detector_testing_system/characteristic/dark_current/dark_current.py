@@ -14,7 +14,7 @@ from detector_testing_system.characteristic.dark_current.models import (
     DarkCurrentResult,
 )
 from detector_testing_system.data import Data, Trace
-from detector_testing_system.experiment import FitArrayError
+from detector_testing_system.experiment import FitError
 from detector_testing_system.types import AxesView
 from detector_testing_system.utils import (
     calculate_outlier_bounds,
@@ -156,8 +156,8 @@ def calculate_dark_current(
 
     try:
         result = model.fit(trace=trace)
-    except FitArrayError:
-        raise FitArrayError(
+    except FitError:
+        raise FitError(
             message=f'Data don\'t enough to be fitted! Dark current calculation was failed in cell {trace.n}.',
         )
 
@@ -180,7 +180,7 @@ def research_dark_current(
                 model=model,
             )
             value[n] = dark_current.value
-        except FitArrayError:
+        except FitError:
             value[n] = float(np.nan)
 
     return DarkCurrentReaerchResult(

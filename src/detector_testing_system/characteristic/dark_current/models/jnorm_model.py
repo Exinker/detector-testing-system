@@ -7,7 +7,7 @@ from detector_testing_system.characteristic.gradient import (
     calculate_gradient,
 )
 from detector_testing_system.data import Trace, TraceFilter
-from detector_testing_system.experiment import FitArrayError
+from detector_testing_system.experiment import FitError
 
 from .base_model import DarkCurrentModelABC, DarkCurrentResult
 
@@ -37,7 +37,7 @@ class JNormDarkCurrentModel(DarkCurrentModelABC):
             gradient=gradient,
         )
         if sum(mask) == 0:
-            raise FitArrayError(
+            raise FitError(
                 message=f'Data don\'t enough to be fitted! Linear fit calculation was failed in cell {trace.n}.',
             )
 

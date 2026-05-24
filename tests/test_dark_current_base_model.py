@@ -7,9 +7,8 @@ from detector_testing_system.characteristic.dark_current.models import (
     BaseDarkCurrentModel,
     JNormDarkCurrentModel,
 )
-from detector_testing_system.data import Trace
-from detector_testing_system.experiment import FitArrayError
-from detector_testing_system.utils import filter_factory
+from detector_testing_system.data import Trace, filter_trace_factory
+from detector_testing_system.experiment import FitError
 
 
 def create_trace() -> Trace:
@@ -37,7 +36,7 @@ def create_jnorm_trace() -> Trace:
 
 def test_base_dark_current_model_uses_default_filter() -> None:
     trace = create_trace()
-    expected = filter_factory(
+    expected = filter_trace_factory(
         threshold=(0, trace.units.value_max),
     )(trace)
 
@@ -48,7 +47,7 @@ def test_base_dark_current_model_uses_default_filter() -> None:
 
 def test_base_dark_current_model_uses_custom_filter() -> None:
     trace = create_trace()
-    filter = filter_factory(
+    filter = filter_trace_factory(
         threshold=(0, 10),
         interval=(2, 3),
     )
@@ -63,17 +62,17 @@ def test_base_dark_current_model_uses_custom_filter() -> None:
 
 def test_base_dark_current_model_raises_for_empty_filter_result() -> None:
     trace = create_trace()
-    filter = filter_factory(
+    filter = filter_trace_factory(
         threshold=(100, 200),
     )
 
-    with pytest.raises(FitArrayError):
+    with pytest.raises(FitError):
         BaseDarkCurrentModel(filter=filter).fit(trace)
 
 
 def test_jnorm_dark_current_model_uses_custom_filter() -> None:
     trace = create_jnorm_trace()
-    filter = filter_factory(
+    filter = filter_trace_factory(
         interval=(3, 5),
     )
 
@@ -89,11 +88,11 @@ def test_jnorm_dark_current_model_uses_custom_filter() -> None:
 
 def test_jnorm_dark_current_model_raises_when_filter_has_too_few_points() -> None:
     trace = create_jnorm_trace()
-    filter = filter_factory(
+    filter = filter_trace_factory(
         interval=(3, 3),
     )
 
-    with pytest.raises(FitArrayError):
+    with pytest.raises(FitError):
         JNormDarkCurrentModel(
             epsilon=0,
             min_points=2,
