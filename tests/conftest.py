@@ -205,16 +205,19 @@ def _fake_float(seed: int, min_value: float, max_value: float) -> float:
     fake.seed_instance(seed)
 
     return float(fake.pyfloat(
-        left_digits=2,
-        right_digits=2,
         min_value=min_value,
         max_value=max_value,
     ))
 
 
 @pytest.fixture
-def bias() -> float:
-    return _fake_float(seed=1, min_value=2.0, max_value=8.0)
+def bias(faker, request) -> float:
+    return getattr(request, 'param', faker.pyfloat(min_value=1, max_value=5))
+
+
+@pytest.fixture
+def dark_current() -> float:
+    return _fake_float(seed=4, min_value=5.0, max_value=20.0)
 
 
 @pytest.fixture
@@ -225,11 +228,6 @@ def efficiency() -> float:
 @pytest.fixture
 def read_noise() -> float:
     return _fake_float(seed=3, min_value=0.3, max_value=1.2)
-
-
-@pytest.fixture
-def dark_current() -> float:
-    return _fake_float(seed=4, min_value=5.0, max_value=20.0)
 
 
 @pytest.fixture
