@@ -5,6 +5,10 @@ from vmk_spectrum3_wrapper.types import MilliSecond
 from vmk_spectrum3_wrapper.units import Units
 
 from detector_testing_system import ROOT
+from detector_testing_system.experiment.exceptions import (
+    ConfigNotFoundError,
+    ConfigParseError,
+)
 
 
 @dataclass
@@ -32,9 +36,12 @@ class ExperimentConfig:
         parser = ConfigParser(inline_comment_prefixes='#')
 
         filepath = ROOT / 'ini' / f'{__label}.ini'
+        if not filepath.exists():
+            raise ConfigNotFoundError(f'Failed to load config: {filepath} not found!')
 
-        flag = parser.read(filepath)
-        assert flag, f'File {filepath} not found!'
+        is_parsed = parser.read(filepath)
+        if not is_parsed:
+            raise ConfigParseError(f'Failed to load config: {filepath} not parsed!')
 
         config = cls(
             device_id=parser.get('device', 'id'),

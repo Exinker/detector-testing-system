@@ -14,13 +14,19 @@ from vmk_spectrum3_wrapper.types import Array, MilliSecond
 from detector_testing_system import ROOT
 from detector_testing_system.data import Data, read_data
 from detector_testing_system.experiment.config import ExperimentConfig
+from detector_testing_system.experiment.exceptions import ConfigExposureError
 
 
-def check_source(func: Callable) -> Callable:
+def check_sourse(func: Callable) -> Callable:
     """Check a stability of the light source"""
 
     @wraps(func)
-    def wrapper(device: Device, config: ExperimentConfig, *args, **kwargs):
+    def wrapper(
+        device: Device,
+        config: ExperimentConfig,
+        *args,
+        **kwargs,
+    ):
         if config.check_source_flag is False:
             return func(device, config, *args, **kwargs)
 
@@ -103,7 +109,13 @@ def check_total(func: Callable) -> Callable:
     """Check an estimation of experiment's total time"""
 
     @wraps(func)
-    def wrapper(device: Device, config: ExperimentConfig, params: Sequence[tuple[int, Array[MilliSecond]]], *args, **kwargs):
+    def wrapper(
+        device: Device,
+        config: ExperimentConfig,
+        params: Sequence[tuple[int, Array[MilliSecond]]],
+        *args,
+        **kwargs,
+    ):
         if config.check_total_flag is False:
             return func(device, config, params, *args, **kwargs)
 
@@ -133,14 +145,22 @@ def check_exposure(func: Callable) -> Callable:
     """Check an tau (exposure time)"""
 
     @wraps(func)
-    def wrapper(device: Device, config: ExperimentConfig, params: Sequence[tuple[int, Array[MilliSecond]]], *args, **kwargs):
+    def wrapper(
+        device: Device,
+        config: ExperimentConfig,
+        params: Sequence[tuple[int, Array[MilliSecond]]],
+        *args,
+        **kwargs,
+    ):
         if config.check_exposure_flag is False:
             return func(device, config, params, *args, **kwargs)
 
         if min([min(tau) for _, tau in params]) < config.check_exposure_min:
-            raise ValueError('Check a min `tau` or change `check_exposure_min`!')
+            raise ConfigExposureError('Check a min `tau` or change `check_exposure_min`!')
+
         if max([max(tau) for _, tau in params]) > config.check_exposure_max:
-            raise ValueError('Check a max `tau` or change `check_exposure_max`!')
+            raise ConfigExposureError('Check a max `tau` or change `check_exposure_max`!')
+
         return func(device, config, params, *args, **kwargs)
 
     return wrapper
@@ -148,10 +168,10 @@ def check_exposure(func: Callable) -> Callable:
 
 @check_exposure
 @check_total
-@check_source
+@check_sourse
 def run_experiment(
     device: Device,
-    config: ExperimentConfig,
+    config: ExperimentConfig,  # in wrappers used!
     params: Sequence[tuple[int, Sequence[MilliSecond]]],
     label: str | None = None,
     force: bool = False,
