@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "detector-testing-system"
 version = "1.0.0"
-description = "`Detector Testing System` is a library for testing of the basic parameters of detectors."
+description = "A library designed to test of the basic detectors parameters."
 authors = [
     {name = "Pavel Vaschenko", email="vaschenko@vmk.ru"},
 ]
@@ -52,15 +52,6 @@ dev = [
     {include-group = "notebook"},
 ]
 
-[tool.uv]
-environments = [
-    "sys_platform == 'linux' and platform_machine == 'x86_64'",
-    "sys_platform == 'win32'",
-]
-
 [tool.uv.sources]
-vmk-spectrum3-wrapper = { git = "https://github.com/Exinker/vmk_spectrum3_wrapper", rev = "0.4.0" }
-vmk-spectrum3 = [
-    { path = "vmk_spectrum3-0.2.0-cp310-cp310-win_amd64.whl", marker = "sys_platform == 'win32'" },
-    { path = "vmk_spectrum3-0.2.0-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", marker = "sys_platform == 'linux' and platform_machine == 'x86_64'" },
-]
+vmk-spectrum3-wrapper = { git = "https://github.com/Exinker/vmk-spectrum3-wrapper", tag = "0.4.0" }
+vmk-spectrum3 = { git = "https://github.com/Exinker/vmk-spectrum3", rev = "0.1.0" }
