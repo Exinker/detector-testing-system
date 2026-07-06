@@ -21,7 +21,7 @@ class Gradient:
     def show(
         self,
         views: Sequence[AxesView | None] | None = None,
-        verbose: bool = False,
+        verbose: bool = True,
     ) -> None:
         view_left, view_right = views or [None, None]
 
@@ -44,7 +44,7 @@ class Gradient:
         self,
         ax: Axes,
         view: AxesView | None,
-        verbose: bool = False,
+        verbose: bool = True,
     ) -> None:
         view = view or {}
 
@@ -54,7 +54,7 @@ class Gradient:
         plt.scatter(
             self.trace.tau, self.trace.u,
             c='red', s=10,
-            label=rf'$U_{{{self.trace.n}}}$',
+            label=r'$U$',
         )
         plt.plot(
             self.trace.tau, np.polyval(p, self.trace.tau),
@@ -84,7 +84,7 @@ class Gradient:
         self,
         ax: Axes,
         view: AxesView | None,
-        verbose: bool = False,
+        verbose: bool = True,
     ) -> None:
         view = view or {}
 

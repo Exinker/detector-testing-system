@@ -26,7 +26,7 @@ CMAP = plt.get_cmap('tab10')
 
 
 @dataclass
-class NonlinearityResearchResult:
+class NonlinearityResearch:
 
     data: Data
     model: DarkCurrentModelABC
@@ -40,13 +40,14 @@ class NonlinearityResearchResult:
         self,
         bins: int | Sequence = 40,
         views: Sequence[AxesView | None] | None = None,
-        verbose: bool = False,
+        verbose: bool = True,
+        note: str | None = None,
     ) -> None:
         view_left, view_right = views or [None, None]
 
         fig, (ax_left, ax_right) = plt.subplots(nrows=1, ncols=2, figsize=(12, 4))
 
-        self._plot_left(ax_left, view_left, verbose=verbose)
+        self._plot_left(ax_left, view_left, verbose=verbose, note=note)
         self._plot_right(ax_right, view_right, bins=bins, verbose=verbose)
 
         plt.show()
@@ -55,7 +56,8 @@ class NonlinearityResearchResult:
         self,
         ax: Axes,
         view: AxesView | None,
-        verbose: bool = False,
+        verbose: bool = True,
+        note: str | None = None,
     ) -> None:
         view = view or {}
 
@@ -68,6 +70,11 @@ class NonlinearityResearchResult:
                     'method: {method}'.format(
                         method=getattr(self.model, 'name', 'base'),
                     ),
+                    {
+                        'base': fr'$\alpha: {{{np.nanmean(self.value):.2f}}}$ [%]',
+                        'jnorm': fr'$\Delta U: {{{np.nanmean(self.value):.2f}}}$ [%]',
+                    }[getattr(self.model, 'name', 'base')],
+                    note if note else '',
                 ]),
                 transform=ax.transAxes,
                 ha='left', va='top',
@@ -91,7 +98,7 @@ class NonlinearityResearchResult:
         ax: Axes,
         view: AxesView | None,
         bins: int,
-        verbose: bool = False,
+        verbose: bool = True,
     ) -> None:
         view = view or {}
 
@@ -107,6 +114,7 @@ class NonlinearityResearchResult:
             'base': r'$\alpha$ [%]',
             'jnorm': r'$\Delta U$ [%]',
         }[getattr(self.model, 'name', 'base')])
+        plt.ylabel(r'count')
 
         ax.set(**view)
 
@@ -115,9 +123,8 @@ def research_nonlinearity(
     data: Data,
     model: DarkCurrentModelABC | None = None,
     mask: Array[bool] | None = None,
-    verbose: bool = False,
     **kwargs,
-) -> NonlinearityResearchResult:
+) -> NonlinearityResearch:
     model = model or BaseDarkCurrentModel()
     mask = np.full(data.n_numbers, True) if mask is None else mask
 
@@ -127,19 +134,19 @@ def research_nonlinearity(
             result = calculate_nonlinearity(
                 trace=data.trace(n),
                 model=model,
+                verbose=False,
                 **kwargs,
             )
             value[n] = result.value
         except FitError as error:
-            if verbose:
-                LOGGER.error(
-                    'Calculate nonlinearity (n: %d): %s',
-                    n,
-                    error,
-                )
+            # LOGGER.error(
+            #     'Calculate nonlinearity (n: %d): %s',
+            #     n,
+            #     error,
+            # )
             value[n] = float(np.nan)
 
-    return NonlinearityResearchResult(
+    return NonlinearityResearch(
         data=data,
         model=model,
         value=value,
@@ -150,7 +157,6 @@ def compare_nonlinearity(
     __traces: Sequence[tuple[Trace, str]],
     model: DarkCurrentModelABC | None = None,
     views: Sequence[AxesView | None] | None = None,
-    verbose: bool = False,
     **kwargs,
 ) -> None:
     model = model or BaseDarkCurrentModel()
@@ -160,24 +166,25 @@ def compare_nonlinearity(
     for i, (trace, label) in enumerate(__traces):
         color = CMAP(i % 10)
 
-        result = calculate_nonlinearity(
+        nonlinearity = calculate_nonlinearity(
             trace=trace,
             model=model,
+            verbose=False,
             **kwargs,
         )
-        result._plot_left(
+        nonlinearity._plot_left(
             ax_left,
             view_left,
             color=color,
-            verbose=verbose,
+            verbose=False,
             label=label,
             hat_label=None,
         )
-        result._plot_right(
+        nonlinearity._plot_right(
             ax_right,
             view_right,
             color=color,
-            verbose=verbose,
+            verbose=False,
         )
 
     filedir = ROOT / 'img'
