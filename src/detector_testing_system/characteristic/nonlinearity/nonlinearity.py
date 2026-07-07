@@ -140,7 +140,10 @@ class Nonlinearity:
                 0.95, 0.95,
                 '\n'.join([
                     trace.label.prefix,
-                    fr'$\alpha: {{{self.value:.2f}}}$ [%]',
+                    {
+                        'base': fr'$\alpha: {{{np.nanmean(self.value):.2f}}}$ [%]',
+                        'jnorm': fr'$\Delta U: {{{np.nanmean(self.value):.2f}}}$ [%]',
+                    }[getattr(self.model, 'name', 'base')],
                     fr'$n: {{{self.trace.n}}}$',
                     note if note else '',
                 ]),
