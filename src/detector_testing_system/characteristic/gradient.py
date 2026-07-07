@@ -21,15 +21,14 @@ class Gradient:
     def show(
         self,
         views: Sequence[AxesView | None] | None = None,
-        verbose: bool = True,
     ) -> None:
         view_left, view_right = views or [None, None]
 
 
         fig, (ax_left, ax_right) = plt.subplots(nrows=1, ncols=2, figsize=(12, 4))
 
-        self._plot_left(ax_left, view_left, verbose=verbose)
-        self._plot_right(ax_right, view_right, verbose=verbose)
+        self._plot_left(ax_left, view_left)
+        self._plot_right(ax_right, view_right)
 
         filedir = ROOT / 'img' / self.trace.label
         filedir.mkdir(parents=True, exist_ok=True)
@@ -44,11 +43,8 @@ class Gradient:
         self,
         ax: Axes,
         view: AxesView | None,
-        verbose: bool = True,
     ) -> None:
         view = view or {}
-
-        p = np.polyfit(self.trace.tau, self.trace.u, deg=1)
 
         plt.sca(ax)
         plt.scatter(
@@ -56,21 +52,6 @@ class Gradient:
             c='red', s=10,
             label=r'$U$',
         )
-        plt.plot(
-            self.trace.tau, np.polyval(p, self.trace.tau),
-            color='black', linestyle='solid', linewidth=1,
-            label=r'$\hat{U}$',
-        )
-        if verbose:
-            ax.text(
-                0.95, 0.05/2,
-                '\n'.join([
-                    fr'$a = {{{p[0]:.4f}}}$',
-                    fr'$b = {{{p[1]:.4f}}}$',
-                ]),
-                transform=ax.transAxes,
-                ha='right', va='bottom',
-            )
 
         plt.xlabel(r'$\tau$ [ms]')
         plt.ylabel(r'$U$ [{units}]'.format(units=self.trace.units.label))
@@ -84,7 +65,6 @@ class Gradient:
         self,
         ax: Axes,
         view: AxesView | None,
-        verbose: bool = True,
     ) -> None:
         view = view or {}
 
@@ -93,16 +73,14 @@ class Gradient:
             self.trace.u, self.value,
             c='red', s=10,
         )
-
-        if verbose:
-            plt.text(
-                0.95, 0.95,
-                '\n'.join([
-                    self.trace.label.prefix,
-                ]),
-                transform=ax.transAxes,
-                ha='right', va='top',
-            )
+        plt.text(
+            0.95, 0.95,
+            '\n'.join([
+                self.trace.label.prefix,
+            ]),
+            transform=ax.transAxes,
+            ha='right', va='top',
+        )
 
         plt.xlabel(r'$U$ [{units}]'.format(units=self.trace.units.label))
         plt.ylabel(r'$dU / d\tau$')
