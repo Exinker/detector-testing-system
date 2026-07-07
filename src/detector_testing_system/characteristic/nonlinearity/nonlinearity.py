@@ -246,10 +246,14 @@ def _calculate_nonlinearity_jnorm(
             color='black', linestyle='solid', linewidth=1,
         )
         plt.text(
-            0.95, 0.95,
+            0.975, 0.95,
             '\n'.join([
                 trace.label.prefix,
-                fr'$\alpha: {{{span:.2f}}}$ [%]',
+                r'$i$: {value:.4f} [{units}]'.format(
+                    value=1e+3*np.nanmean(gradient.value[dark_current.mask]),  # in %/s
+                    units=f'{trace.units.label}/s',
+                ),
+                fr'$\Delta U: {{{span:.2f}}}$ [%]',
                 fr'$n: {{{trace.n}}}$',
             ]),
             transform=ax.transAxes,
