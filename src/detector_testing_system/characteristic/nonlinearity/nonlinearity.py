@@ -233,16 +233,16 @@ def _calculate_nonlinearity_jnorm(
 
         plt.sca(ax)
         plt.scatter(
-            trace.u, gradient.value,
+            trace.u, 1e+3*gradient.value,
             c='grey', s=10,
         )
         plt.scatter(
-            trace.u[dark_current.mask], gradient.value[dark_current.mask],
+            trace.u[dark_current.mask], 1e+3*gradient.value[dark_current.mask],
             c='red', s=10,
             label=r'$U$',
         )
         plt.axhline(
-            dark_current.value,
+            1e+3*dark_current.value,
             color='black', linestyle='solid', linewidth=1,
         )
         plt.text(
@@ -261,7 +261,7 @@ def _calculate_nonlinearity_jnorm(
         )
         if span > 0:
             plt.axhline(
-                k * dark_current.value,
+                k * 1e+3*dark_current.value,
                 color='red', linestyle='--', linewidth=1,
             )
             plt.axvspan(
@@ -272,7 +272,7 @@ def _calculate_nonlinearity_jnorm(
             )
 
         plt.xlabel(r'$U$ [{units}]'.format(units=trace.units.label))
-        plt.ylabel(r'$dU / d\tau$')
+        plt.ylabel(r'$dU / d\tau$ [%/s]')
 
         plt.grid(color='grey', linestyle=':')
         plt.show()

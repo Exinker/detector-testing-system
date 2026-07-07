@@ -70,7 +70,7 @@ class Gradient:
 
         plt.sca(ax)
         plt.scatter(
-            self.trace.u, self.value,
+            self.trace.u, 1e+3*self.value,
             c='red', s=10,
         )
         plt.text(
@@ -83,7 +83,7 @@ class Gradient:
         )
 
         plt.xlabel(r'$U$ [{units}]'.format(units=self.trace.units.label))
-        plt.ylabel(r'$dU / d\tau$')
+        plt.ylabel(r'$dU / d\tau$ [%/s]')
 
         plt.grid(color='grey', linestyle=':')
 
