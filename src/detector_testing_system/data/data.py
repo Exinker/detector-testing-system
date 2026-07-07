@@ -107,14 +107,14 @@ class Data:
     def show(self, legend: bool = False, save: bool = False) -> None:
         """Show data"""
 
-        fig, ax = plt.subplots(figsize=(6, 4), tight_layout=True)
+        fig, ax = plt.subplots(figsize=(12, 4), tight_layout=True)
 
         plt.plot(
             self.u.T,
             label=[datum.label for datum in self.data],
         )
         plt.text(
-            0.95, 0.95,
+            0.975, 0.95,
             '\n'.join([
                 self.label.prefix,
             ]),

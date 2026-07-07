@@ -9,11 +9,11 @@ from matplotlib.axes import Axes
 from vmk_spectrum3_wrapper.types import Array, U
 
 from detector_testing_system import ROOT
-from detector_testing_system.characteristic.dark_current import (
-    BaseDarkCurrentModel,
-    DarkCurrentModelABC,
-    DarkCurrent,
-    JNormDarkCurrentModel,
+from detector_testing_system.characteristic.current import (
+    BaseCurrentModel,
+    CurrentModelABC,
+    Current,
+    JNormCurrentModel,
 )
 from detector_testing_system.characteristic.gradient import Gradient, calculate_gradient
 from detector_testing_system.data import Trace
@@ -26,15 +26,15 @@ LOGGER = logging.getLogger(__name__)
 class Nonlinearity:
 
     trace: Trace
-    model: DarkCurrentModelABC
-    dark_current: DarkCurrent
+    model: CurrentModelABC
+    dark_current: Current
     value: float
 
     def show(
         self,
         views: Sequence[AxesView | None] | None = None,
         verbose: bool = True,
-        note: str | None = None,
+        note: str = '',
     ) -> None:
         view_left, view_right = views or [{}, {}]
 
@@ -57,17 +57,15 @@ class Nonlinearity:
         self,
         ax: Axes,
         view: AxesView | None,
-        color: str | None = None,
         verbose: bool = True,
-        label: str | None = None,
+        color: str | None = 'red',
+        label: str | None = r'$U$',
         hat_label: str | None = r'$\hat{U}$',
     ) -> None:
         trace = self.dark_current.trace
         mask = self.dark_current.mask
 
         view = view or {}
-        color = color or 'red'
-        label = label or r'$U$'
 
         plt.sca(ax)
         plt.scatter(
@@ -107,12 +105,11 @@ class Nonlinearity:
         self,
         ax: Axes,
         view: AxesView | None,
-        color: str | None = None,
         verbose: bool = True,
-        note: str | None = None,
+        color: str | None = 'red',
+        note: str = '',
     ) -> None:
         view = view or {}
-        color = color or 'red'
 
         trace = self.dark_current.trace
         mask = self.dark_current.mask
@@ -131,7 +128,7 @@ class Nonlinearity:
             plt.text(
                 0.95, 0.05/2,
                 '\n'.join([
-                    r'$error = 100\frac{\hat{U} - U_{i}}{a \tau}$',
+                    r'$\xi = 100\frac{\hat{U} - U}{a \tau}$',
                 ]),
                 transform=ax.transAxes,
                 ha='right', va='bottom',
@@ -145,14 +142,14 @@ class Nonlinearity:
                         'jnorm': fr'$\Delta U: {{{np.nanmean(self.value):.2f}}}$ [%]',
                     }[getattr(self.model, 'name', 'base')],
                     fr'$n: {{{self.trace.n}}}$',
-                    note if note else '',
+                    note,
                 ]),
                 transform=ax.transAxes,
                 ha='right', va='top',
             )
 
         plt.xlabel(r'$U$ [{units}]'.format(units=trace.units.label))
-        plt.ylabel(r'$error$ [%]')
+        plt.ylabel(r'$\xi$ [%]')
 
         plt.grid(color='grey', linestyle=':')
 
@@ -161,13 +158,13 @@ class Nonlinearity:
 
 def calculate_nonlinearity(
     trace: Trace,
-    model: DarkCurrentModelABC | None = None,
+    model: CurrentModelABC | None = None,
     verbose: bool = True,
     **kwargs,
 ) -> Nonlinearity:
-    model = model or BaseDarkCurrentModel()
+    model = model or BaseCurrentModel()
 
-    if isinstance(model, BaseDarkCurrentModel):
+    if isinstance(model, BaseCurrentModel):
         return _calculate_nonlinearity_base(
             trace=trace,
             model=model,
@@ -175,7 +172,7 @@ def calculate_nonlinearity(
             **kwargs,
         )
 
-    if isinstance(model, JNormDarkCurrentModel):
+    if isinstance(model, JNormCurrentModel):
         return _calculate_nonlinearity_jnorm(
             trace=trace,
             model=model,
@@ -183,12 +180,12 @@ def calculate_nonlinearity(
             **kwargs,
         )
 
-    raise TypeError('`BaseDarkCurrentModel` and `JNormDarkCurrentModel` are supported only!')
+    raise TypeError('`BaseCurrentModel` and `JNormCurrentModel` are supported only!')
 
 
 def _calculate_nonlinearity_base(
     trace: Trace,
-    model: BaseDarkCurrentModel,
+    model: BaseCurrentModel,
     verbose: bool = True,
 ) -> Nonlinearity:
 
@@ -213,7 +210,7 @@ def _calculate_alpha(xi: Array[U]) -> float:
 
 def _calculate_nonlinearity_jnorm(
     trace: Trace,
-    model: JNormDarkCurrentModel,
+    model: JNormCurrentModel,
     k: float = 2,
     verbose: bool = True,
 ) -> Nonlinearity:

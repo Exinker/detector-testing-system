@@ -1,6 +1,6 @@
 import numpy as np
 
-from detector_testing_system.characteristic.dark_current import calculate_dark_current, research_dark_current
+from detector_testing_system.characteristic.current import calculate_current, research_current
 
 from tests.conftest import assert_mean_close
 
@@ -12,7 +12,7 @@ def test_calculate_dark_current_for_noiseless_signal(data_model, dark_current):
     )
     trace = data.trace(2)
 
-    result = calculate_dark_current(
+    result = calculate_current(
         trace,
         model=None,
     )
@@ -28,7 +28,7 @@ def test_research_dark_current_for_noisy_detector_report(data_model, dark_curren
         dark_current_spread=2.0,
     )
 
-    result = research_dark_current(data)
+    result = research_current(data)
 
     assert len(result.value) == 4096
     assert_mean_close(result.value, dark_current / 1000)
@@ -40,7 +40,7 @@ def test_research_dark_current_for_noiseless_detector(data_model, dark_current):
         is_lighted=False,
     )
 
-    result = research_dark_current(data)
+    result = research_current(data)
 
     np.testing.assert_allclose(
         result.value,

@@ -3,9 +3,9 @@ from types import SimpleNamespace
 import numpy as np
 import pytest
 
-from detector_testing_system.characteristic.dark_current import (
-    BaseDarkCurrentModel,
-    JNormDarkCurrentModel,
+from detector_testing_system.characteristic.current import (
+    BaseCurrentModel,
+    JNormCurrentModel,
 )
 from detector_testing_system.data import Trace, filter_trace_factory
 from detector_testing_system.experiment import FitError
@@ -38,7 +38,7 @@ def test_base_dark_current_model_uses_default_filter() -> None:
     trace = create_trace()
     expected = filter_trace_factory()(trace)
 
-    result = BaseDarkCurrentModel(weighted=False).fit(trace)
+    result = BaseCurrentModel(weighted=False).fit(trace)
 
     np.testing.assert_array_equal(result.mask, expected)
 
@@ -50,7 +50,7 @@ def test_base_dark_current_model_uses_custom_filter() -> None:
         interval=(2, 3),
     )
 
-    result = BaseDarkCurrentModel(
+    result = BaseCurrentModel(
         weighted=False,
         filter=filter,
     ).fit(trace)
@@ -65,7 +65,7 @@ def test_base_dark_current_model_raises_for_empty_filter_result() -> None:
     )
 
     with pytest.raises(FitError):
-        BaseDarkCurrentModel(filter=filter).fit(trace)
+        BaseCurrentModel(filter=filter).fit(trace)
 
 
 def test_jnorm_dark_current_model_uses_custom_filter() -> None:
@@ -74,7 +74,7 @@ def test_jnorm_dark_current_model_uses_custom_filter() -> None:
         interval=(3, 5),
     )
 
-    result = JNormDarkCurrentModel(
+    result = JNormCurrentModel(
         epsilon=0,
         min_points=2,
         filter=filter,
@@ -91,7 +91,7 @@ def test_jnorm_dark_current_model_raises_when_filter_has_too_few_points() -> Non
     )
 
     with pytest.raises(FitError):
-        JNormDarkCurrentModel(
+        JNormCurrentModel(
             epsilon=0,
             min_points=2,
             filter=filter,

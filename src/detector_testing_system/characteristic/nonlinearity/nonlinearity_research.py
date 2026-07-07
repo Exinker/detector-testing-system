@@ -10,9 +10,9 @@ from tqdm.notebook import tqdm
 from vmk_spectrum3_wrapper.types import Array, Number
 
 from detector_testing_system import ROOT
-from detector_testing_system.characteristic.dark_current import (
-    BaseDarkCurrentModel,
-    DarkCurrentModelABC,
+from detector_testing_system.characteristic.current import (
+    BaseCurrentModel,
+    CurrentModelABC,
 )
 from detector_testing_system.characteristic.nonlinearity.nonlinearity import (
     calculate_nonlinearity,
@@ -29,7 +29,7 @@ CMAP = plt.get_cmap('tab10')
 class NonlinearityResearch:
 
     data: Data
-    model: DarkCurrentModelABC
+    model: CurrentModelABC
     value: Array[float]
 
     @property
@@ -41,7 +41,7 @@ class NonlinearityResearch:
         bins: int | Sequence = 40,
         views: Sequence[AxesView | None] | None = None,
         verbose: bool = True,
-        note: str | None = None,
+        note: str = '',
     ) -> None:
         view_left, view_right = views or [None, None]
 
@@ -57,7 +57,7 @@ class NonlinearityResearch:
         ax: Axes,
         view: AxesView | None,
         verbose: bool = True,
-        note: str | None = None,
+        note: str = '',
     ) -> None:
         view = view or {}
 
@@ -74,7 +74,7 @@ class NonlinearityResearch:
                         'base': fr'$\alpha: {{{np.nanmean(self.value):.2f}}}$ [%]',
                         'jnorm': fr'$\Delta U: {{{np.nanmean(self.value):.2f}}}$ [%]',
                     }[getattr(self.model, 'name', 'base')],
-                    note if note else '',
+                    note,
                 ]),
                 transform=ax.transAxes,
                 ha='left', va='top',
@@ -121,11 +121,11 @@ class NonlinearityResearch:
 
 def research_nonlinearity(
     data: Data,
-    model: DarkCurrentModelABC | None = None,
+    model: CurrentModelABC | None = None,
     mask: Array[bool] | None = None,
     **kwargs,
 ) -> NonlinearityResearch:
-    model = model or BaseDarkCurrentModel()
+    model = model or BaseCurrentModel()
     mask = np.full(data.n_numbers, True) if mask is None else mask
 
     value = np.full(data.n_numbers, np.nan)
@@ -155,11 +155,11 @@ def research_nonlinearity(
 
 def compare_nonlinearity(
     __traces: Sequence[tuple[Trace, str]],
-    model: DarkCurrentModelABC | None = None,
+    model: CurrentModelABC | None = None,
     views: Sequence[AxesView | None] | None = None,
     **kwargs,
 ) -> None:
-    model = model or BaseDarkCurrentModel()
+    model = model or BaseCurrentModel()
     view_left, view_right = views or [None, None]
 
     fig, (ax_left, ax_right) = plt.subplots(nrows=1, ncols=2, figsize=(12, 4))

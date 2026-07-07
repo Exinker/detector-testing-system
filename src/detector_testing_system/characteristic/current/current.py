@@ -19,10 +19,10 @@ from detector_testing_system.types import AxesView
 
 
 @dataclass
-class DarkCurrent:
+class Current:
 
     trace: Trace
-    model: 'DarkCurrentModelABC'
+    model: 'CurrentModelABC'
     mask: Array[bool]
     value: float
     bias: float
@@ -38,25 +38,15 @@ class DarkCurrent:
     def show(
         self,
         views: Sequence[AxesView | None] | None = None,
-        color: str | None = None,
-        verbose: bool = False,
+        verbose: bool = True,
+        note: str = '',
     ) -> None:
         view_left, view_right = views or [{}, {}]
 
         fig, (ax_left, ax_right) = plt.subplots(nrows=1, ncols=2, figsize=(12, 4))
 
-        self._plot_left(
-            ax_left,
-            view_left,
-            color=color,
-            verbose=verbose,
-        )
-        self._plot_right(
-            ax_right,
-            view_right,
-            color=color,
-            verbose=verbose,
-        )
+        self._plot_left(ax_left, view_left, verbose=verbose)
+        self._plot_right(ax_right, view_right, verbose=verbose, note=note)
 
         filedir = ROOT / 'img' / self.trace.label
         filedir.mkdir(parents=True, exist_ok=True)
@@ -72,11 +62,10 @@ class DarkCurrent:
         self,
         ax: Axes,
         view: AxesView,
-        color: str | None = None,
-        verbose: bool = False,
+        verbose: bool = True,
+        color: str = 'red',
     ) -> None:
         view = view or {}
-        color = color or 'red'
 
         plt.sca(ax)
         plt.scatter(
@@ -86,15 +75,16 @@ class DarkCurrent:
         plt.scatter(
             self.trace.tau[self.mask], self.trace.u[self.mask],
             c=color, s=10,
-            label=rf'$U_{{{self.trace.n}}}$',
+            label=r'$U$',
         )
         plt.plot(
             self.trace.tau, self.interpolate(self.trace.tau),
             color='black', linestyle='-', linewidth=1,
+            label=r'$\hat{U}$',
         )
         if verbose:
             plt.text(
-                0.05/2, 0.95,
+                0.95, 0.05/2,
                 '\n'.join([
                     r'$i$: {value:.4f} [{units}]'.format(
                         value=1e+3*self.value,  # in %/s
@@ -102,7 +92,7 @@ class DarkCurrent:
                     ),
                 ]),
                 transform=ax.transAxes,
-                ha='left', va='top',
+                ha='right', va='bottom',
             )
 
         plt.xlabel(r'$\tau$ [{units}]'.format(units=r'$ms$'))
@@ -117,11 +107,11 @@ class DarkCurrent:
         self,
         ax: Axes,
         view: AxesView,
-        color: str | None = None,
-        verbose: bool = False,
+        verbose: bool = True,
+        color: str = 'red',
+        note: str = '',
     ) -> None:
         view = view or {}
-        color = color or 'red'
 
         plt.sca(ax)
         plt.scatter(
@@ -138,7 +128,12 @@ class DarkCurrent:
                 0.95, 0.95,
                 '\n'.join([
                     self.trace.label.prefix,
-                    fr'$\alpha: {{{self.value:.2f}}}$ [%]',
+                    {
+                        'base': fr'$\alpha: {{{np.nanmean(self.value):.2f}}}$ [%]',
+                        'jnorm': fr'$\Delta U: {{{np.nanmean(self.value):.2f}}}$ [%]',
+                    }[getattr(self.model, 'name', 'base')],
+                    fr'$n: {{{self.trace.n}}}$',
+                    note,
                 ]),
                 transform=ax.transAxes,
                 ha='right', va='top',
@@ -146,22 +141,10 @@ class DarkCurrent:
             plt.text(
                 0.95, 0.05/2,
                 '\n'.join([
-                    r'$error = 100\frac{\hat{U} - U_{i}}{a \tau}$',
+                    r'$\xi = 100\frac{\hat{U} - U}{a \tau}$',
                 ]),
                 transform=ax.transAxes,
                 ha='right', va='bottom',
-            )
-        if verbose:
-            plt.text(
-                0.05/2, 0.95,
-                '\n'.join([
-                    r'$i$: {value:.4f} [{units}]'.format(
-                        value=1e+3*self.value,  # in %/s
-                        units=f'{self.trace.units.label}/s',
-                    ),
-                ]),
-                transform=ax.transAxes,
-                ha='left', va='top',
             )
 
         plt.xlabel(r'$\tau$ [{units}]'.format(units=r'$ms$'))
@@ -172,7 +155,7 @@ class DarkCurrent:
         ax.set(**view)
  
 
-class DarkCurrentModelABC(ABC):
+class CurrentModelABC(ABC):
 
     def __init__(
         self,
@@ -189,7 +172,7 @@ class DarkCurrentModelABC(ABC):
         return super().__init_subclass__(*args, **kwargs)
 
     @abstractmethod
-    def fit(self, trace: Trace) -> DarkCurrent:
+    def fit(self, trace: Trace) -> Current:
         pass
 
     @staticmethod
@@ -207,7 +190,7 @@ class DarkCurrentModelABC(ABC):
         return xi
 
 
-class BaseDarkCurrentModel(DarkCurrentModelABC):
+class BaseCurrentModel(CurrentModelABC):
 
     name = 'base'
     degree = 1
@@ -224,7 +207,7 @@ class BaseDarkCurrentModel(DarkCurrentModelABC):
     def fit(
         self,
         trace: Trace,
-    ) -> DarkCurrent:
+    ) -> Current:
 
         mask = self.filter(trace)
         if sum(mask) < self.degree + 1:
@@ -246,7 +229,7 @@ class BaseDarkCurrentModel(DarkCurrentModelABC):
             p=p,
         )
 
-        return DarkCurrent(
+        return Current(
             trace=trace,
             model=self,
             value=float(p[0]),
@@ -274,7 +257,7 @@ class BaseDarkCurrentModel(DarkCurrentModelABC):
         return np.array([a, b])
 
 
-class JNormDarkCurrentModel(DarkCurrentModelABC):
+class JNormCurrentModel(CurrentModelABC):
 
     name = 'jnorm'
 
@@ -289,7 +272,7 @@ class JNormDarkCurrentModel(DarkCurrentModelABC):
         self.epsilon = epsilon
         self.min_points = min_points
 
-    def fit(self, trace: Trace) -> DarkCurrent:
+    def fit(self, trace: Trace) -> Current:
 
         gradient = calculate_gradient(trace=trace)
 
@@ -312,7 +295,7 @@ class JNormDarkCurrentModel(DarkCurrentModelABC):
             p=np.array([value, bias]),
         )
 
-        return DarkCurrent(
+        return Current(
             trace=trace,
             model=self,
             value=value,
@@ -348,11 +331,11 @@ class JNormDarkCurrentModel(DarkCurrentModelABC):
         return float(np.std(values) / abs(mean))
 
 
-def calculate_dark_current(
+def calculate_current(
     trace: Trace,
-    model: DarkCurrentModelABC | None = None,
-) -> DarkCurrent:
-    model = model or BaseDarkCurrentModel()
+    model: CurrentModelABC | None = None,
+) -> Current:
+    model = model or BaseCurrentModel()
 
     try:
         result = model.fit(trace=trace)
