@@ -52,7 +52,7 @@ def calculate_efficiency(
 
         bias = calculate_bias(
             trace=trace,
-            threshold=threshold,
+            filter=
         )
 
         plt.scatter(

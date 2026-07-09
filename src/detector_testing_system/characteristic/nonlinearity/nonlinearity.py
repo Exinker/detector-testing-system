@@ -15,7 +15,10 @@ from detector_testing_system.characteristic.current import (
     Current,
     JNormCurrentModel,
 )
-from detector_testing_system.characteristic.gradient import Gradient, calculate_gradient
+from detector_testing_system.characteristic.gradient import (
+    Gradient,
+    calculate_gradient,
+)
 from detector_testing_system.data import Trace
 from detector_testing_system.types import AxesView
 
@@ -40,8 +43,8 @@ class Nonlinearity:
 
         fig, (ax_left, ax_right) = plt.subplots(nrows=1, ncols=2, figsize=(12, 4))
 
-        self._plot_left(ax_left, view_left, verbose=verbose)
-        self._plot_right(ax_right, view_right, verbose=verbose, note=note)
+        self._show_left(ax_left, view_left, verbose=verbose)
+        self._show_right(ax_right, view_right, verbose=verbose, note=note)
 
         filedir = ROOT / 'img' / self.trace.label
         filedir.mkdir(parents=True, exist_ok=True)
@@ -53,7 +56,7 @@ class Nonlinearity:
 
         plt.show()
 
-    def _plot_left(
+    def _show_left(
         self,
         ax: Axes,
         view: AxesView | None,
@@ -101,7 +104,7 @@ class Nonlinearity:
 
         ax.set(**view)
 
-    def _plot_right(
+    def _show_right(
         self,
         ax: Axes,
         view: AxesView | None,
@@ -168,7 +171,6 @@ def calculate_nonlinearity(
         return _calculate_nonlinearity_base(
             trace=trace,
             model=model,
-            verbose=verbose,
             **kwargs,
         )
 
@@ -186,7 +188,6 @@ def calculate_nonlinearity(
 def _calculate_nonlinearity_base(
     trace: Trace,
     model: BaseCurrentModel,
-    verbose: bool = True,
 ) -> Nonlinearity:
 
     if not model.weighted:

@@ -107,7 +107,7 @@ class Data:
     def show(self, legend: bool = False, save: bool = False) -> None:
         """Show data"""
 
-        fig, ax = plt.subplots(figsize=(12, 4), tight_layout=True)
+        fig, ax = plt.subplots(figsize=(6, 4), tight_layout=True)
 
         plt.plot(
             self.u.T,

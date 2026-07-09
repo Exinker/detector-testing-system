@@ -47,12 +47,12 @@ class NonlinearityResearch:
 
         fig, (ax_left, ax_right) = plt.subplots(nrows=1, ncols=2, figsize=(12, 4))
 
-        self._plot_left(ax_left, view_left, verbose=verbose, note=note)
-        self._plot_right(ax_right, view_right, bins=bins, verbose=verbose)
+        self._show_left(ax_left, view_left, verbose=verbose, note=note)
+        self._show_right(ax_right, view_right, bins=bins, verbose=verbose)
 
         plt.show()
 
-    def _plot_left(
+    def _show_left(
         self,
         ax: Axes,
         view: AxesView | None,
@@ -62,6 +62,12 @@ class NonlinearityResearch:
         view = view or {}
 
         plt.sca(ax)
+
+        plt.scatter(
+            self.number, self.value,
+            c='red', s=10,
+            label=r'$U$',
+        )
         if verbose:
             plt.text(
                 0.05/2, 0.95,
@@ -79,11 +85,7 @@ class NonlinearityResearch:
                 transform=ax.transAxes,
                 ha='left', va='top',
             )
-        plt.scatter(
-            self.number, self.value,
-            c='red', s=10,
-            label=r'$U$',
-        )
+
         plt.xlabel(r'number')
         plt.ylabel({
             'base': r'$\alpha$ [%]',
@@ -93,7 +95,7 @@ class NonlinearityResearch:
 
         ax.set(**view)
 
-    def _plot_right(
+    def _show_right(
         self,
         ax: Axes,
         view: AxesView | None,
@@ -172,7 +174,7 @@ def compare_nonlinearity(
             verbose=False,
             **kwargs,
         )
-        nonlinearity._plot_left(
+        nonlinearity._show_left(
             ax_left,
             view_left,
             color=color,
@@ -180,7 +182,7 @@ def compare_nonlinearity(
             label=label,
             hat_label=None,
         )
-        nonlinearity._plot_right(
+        nonlinearity._show_right(
             ax_right,
             view_right,
             color=color,

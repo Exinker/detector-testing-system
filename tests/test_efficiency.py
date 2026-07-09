@@ -1,6 +1,6 @@
 import numpy as np
 
-from detector_testing_system.characteristic.efficiency import calculate_efficiency, research_efficiency
+from detector_testing_system.characteristic.efficiency.efficiency import calculate_efficiency, research_efficiency
 
 from tests.conftest import assert_mean_close
 

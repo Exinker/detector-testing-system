@@ -13,7 +13,11 @@ from detector_testing_system.characteristic.gradient import (
     calculate_gradient,
 )
 from detector_testing_system import ROOT
-from detector_testing_system.data import Trace, TraceFilter, filter_trace_factory
+from detector_testing_system.data import (
+    Trace,
+    TraceFilter,
+    filter_trace_factory,
+)
 from detector_testing_system.experiment import FitError
 from detector_testing_system.types import AxesView
 
@@ -45,8 +49,8 @@ class Current:
 
         fig, (ax_left, ax_right) = plt.subplots(nrows=1, ncols=2, figsize=(12, 4))
 
-        self._plot_left(ax_left, view_left, verbose=verbose)
-        self._plot_right(ax_right, view_right, verbose=verbose, note=note)
+        self._show_left(ax_left, view_left, verbose=verbose)
+        self._show_right(ax_right, view_right, verbose=verbose, note=note)
 
         filedir = ROOT / 'img' / self.trace.label
         filedir.mkdir(parents=True, exist_ok=True)
@@ -58,7 +62,7 @@ class Current:
 
         plt.show()
 
-    def _plot_left(
+    def _show_left(
         self,
         ax: Axes,
         view: AxesView,
@@ -103,7 +107,7 @@ class Current:
 
         ax.set(**view)
 
-    def _plot_right(
+    def _show_right(
         self,
         ax: Axes,
         view: AxesView,

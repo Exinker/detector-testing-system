@@ -44,7 +44,7 @@ class CurrentResearch:
 
         fig, (ax_left, ax_right) = plt.subplots(nrows=1, ncols=2, figsize=(12, 4))
 
-        self._plot_left(
+        self._show_left(
             ax_left,
             view_left,
             confidence=confidence,
@@ -52,7 +52,7 @@ class CurrentResearch:
             verbose=verbose,
             note=note,
         )
-        self._plot_right(
+        self._show_right(
             ax_right,
             view_right,
             bins=bins,
@@ -69,7 +69,7 @@ class CurrentResearch:
 
         plt.show()
 
-    def _plot_left(
+    def _show_left(
         self,
         ax: Axes,
         view: AxesView,
@@ -87,6 +87,11 @@ class CurrentResearch:
         mean, ci = calculate_stats(dark_current_trunked, confidence=confidence)
 
         plt.sca(ax)
+        plt.scatter(
+            number, 1e+3*self.value,
+            c='black', s=2,
+            label='$i_{{d}}$'
+        )
         if verbose:
             plt.text(
                 0.05/2, 0.95,
@@ -104,26 +109,22 @@ class CurrentResearch:
                 transform=ax.transAxes,
                 ha='left', va='top',
             )
-        plt.scatter(
-            number, 1e+3*self.value,
-            c='black', s=2,
-            label='$i_{{d}}$'
-        )
-        plt.xlabel(r'$number$')
-        plt.ylabel(r'$i_{{d}}$ [{units}]'.format(
-            units=f'{self.data.units.label}/s',
-        ))
+
         ylim_max = min(1.5 * np.nanmax(1e+3*self.value), 5*ub)
         ylim_min = np.nanmin(1e+3*self.value) - .025*(ylim_max - np.nanmin(1e+3*self.value))
         plt.ylim([
             ylim_min,
             ylim_max,
         ])
+        plt.xlabel(r'$number$')
+        plt.ylabel(r'$i_{{d}}$ [{units}]'.format(
+            units=f'{self.data.units.label}/s',
+        ))
         plt.grid(color='grey', linestyle=':')
 
         ax.set(**view)
 
-    def _plot_right(
+    def _show_right(
         self,
         ax: Axes,
         view: AxesView,

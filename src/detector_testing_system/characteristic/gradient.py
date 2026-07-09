@@ -27,8 +27,8 @@ class Gradient:
 
         fig, (ax_left, ax_right) = plt.subplots(nrows=1, ncols=2, figsize=(12, 4))
 
-        self._plot_left(ax_left, view_left)
-        self._plot_right(ax_right, view_right)
+        self._show_left(ax_left, view_left)
+        self._show_right(ax_right, view_right)
 
         filedir = ROOT / 'img' / self.trace.label
         filedir.mkdir(parents=True, exist_ok=True)
@@ -39,7 +39,7 @@ class Gradient:
 
         plt.show()
 
-    def _plot_left(
+    def _show_left(
         self,
         ax: Axes,
         view: AxesView | None,
@@ -61,7 +61,7 @@ class Gradient:
 
         ax.set(**view)
 
-    def _plot_right(
+    def _show_right(
         self,
         ax: Axes,
         view: AxesView | None,
