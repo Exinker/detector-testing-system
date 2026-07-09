@@ -1,6 +1,7 @@
 import logging
 from collections.abc import Sequence
 from dataclasses import dataclass
+from typing import Callable
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -163,10 +164,9 @@ class EfficiencyResearch:
 
 def research_efficiency(
     data: Data,
-    threshold: tuple[float, float] | None = None,
+    filter: Callable[[Trace], Array[bool]] | None = None,
     mask: Array[bool] | None = None,
 ) -> EfficiencyResearch:
-    threshold = threshold or (0, data.units.value_max)
     mask = np.full(data.n_numbers, True) if mask is None else mask
 
     value = np.full(data.n_numbers, np.nan)
@@ -174,6 +174,7 @@ def research_efficiency(
         try:
             result = calculate_efficiency(
                 trace=data.trace(n),
+                filter=filter
             )
             value[n] = result.value
         except FitError as error:

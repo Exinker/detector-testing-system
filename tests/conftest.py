@@ -155,8 +155,8 @@ class DataModel:
         if spread == 0 or rng is None:
             return np.full(self.n_pixels, center, dtype=float)
 
-        values = rng.normal(loc=center, scale=spread, size=self.n_pixels)
-        return values - np.mean(values) + center
+        value = rng.normal(loc=center, scale=spread, size=self.n_pixels)
+        return value - np.mean(value) + center
 
     def _average(self, tau: float, parameters: dict[str, np.ndarray]) -> np.ndarray:
         return (
@@ -191,13 +191,13 @@ def _normalized_frames(n_frames: int) -> np.ndarray:
     return (frames - np.mean(frames)) / np.std(frames, ddof=1)
 
 
-def assert_mean_close(values: np.ndarray, value: float, k: int = 3) -> None:
-    values = np.asarray(values, dtype=float)
-    values = values[~np.isnan(values)]
-    mean = np.mean(values)
-    sem = np.std(values, ddof=1) / np.sqrt(len(values))
+def assert_mean_close(value: np.ndarray, expected: float, k: int = 3) -> None:
+    value = np.asarray(value, dtype=float)
+    value = value[~np.isnan(value)]
+    mean = np.mean(value)
+    sem = np.std(value, ddof=1) / np.sqrt(len(value))
 
-    assert np.isclose(value, mean, atol=k*sem)
+    assert np.isclose(expected, mean, atol=k*sem)
 
 
 def _fake_float(seed: int, min_value: float, max_value: float) -> float:

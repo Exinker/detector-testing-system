@@ -1,6 +1,9 @@
 import numpy as np
 
-from detector_testing_system.characteristic.read_noise import research_read_noise, research_relative_read_noise
+from detector_testing_system.characteristic.read_noise import (
+    research_read_noise,
+    research_relative_read_noise,
+)
 
 from tests.conftest import assert_mean_close
 
@@ -12,10 +15,10 @@ def test_research_read_noise_for_noiseless_dark_detector(data_model, read_noise)
         is_lighted=False,
     )
 
-    values = research_read_noise(data)
+    value = research_read_noise(data)
 
     np.testing.assert_allclose(
-        values,
+        value,
         np.full(data.n_numbers, read_noise),
     )
 
@@ -28,10 +31,10 @@ def test_research_read_noise_for_noisy_dark_detector_report(data_model, read_noi
         seed=44,
     )
 
-    values = research_read_noise(data)
+    value = research_read_noise(data)
 
-    assert len(values) == 4096
-    assert_mean_close(values, read_noise)
+    assert len(value) == 4096
+    assert_mean_close(value, read_noise)
 
 
 def test_research_relative_read_noise_for_noiseless_dark_detector(data_model):

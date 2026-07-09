@@ -316,11 +316,11 @@ class JNormCurrentModel(CurrentModelABC):
         n_points = len(gradient.value)
 
         for n in range(n_points - self.min_points + 1):
-            values = gradient.value[n:][mask[n:]]
-            if len(values) < self.min_points:
+            value = gradient.value[n:][mask[n:]]
+            if len(value) < self.min_points:
                 continue
 
-            if self._relative_std(values) <= self.epsilon:
+            if self._relative_std(value) <= self.epsilon:
                 return (np.arange(n_points) >= n) & mask
 
         return np.full(n_points, False)

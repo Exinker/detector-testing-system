@@ -1,6 +1,9 @@
 import numpy as np
 
-from detector_testing_system.characteristic.current import calculate_current, research_current
+from detector_testing_system.characteristic.current import (
+    calculate_current,
+    research_current,
+)
 
 from tests.conftest import assert_mean_close
 

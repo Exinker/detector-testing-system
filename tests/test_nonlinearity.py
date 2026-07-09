@@ -1,6 +1,9 @@
 import numpy as np
 
-from detector_testing_system.characteristic.nonlinearity import calculate_nonlinearity, research_nonlinearity
+from detector_testing_system.characteristic.nonlinearity import (
+    calculate_nonlinearity,
+    research_nonlinearity,
+)
 
 
 def test_calculate_nonlinearity_for_noiseless_linear_signal(data_model):
