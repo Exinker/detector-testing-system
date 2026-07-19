@@ -42,7 +42,7 @@ class CurrentResearch:
     ) -> None:
         view_left, view_right = views or [{}, {}]
 
-        fig, (ax_left, ax_right) = plt.subplots(nrows=1, ncols=2, figsize=(12, 4))
+        fig, (ax_left, ax_right) = plt.subplots(nrows=1, ncols=2, figsize=(12, 4), tight_layout=True)
 
         self._show_left(
             ax_left,
@@ -161,7 +161,7 @@ def research_current(
     model: CurrentModelABC | None = None,
     mask: Array[bool] | None = None,
 ) -> CurrentResearch:
-    """Calculate a dark current of the cells"""
+    """Calculate a dark current of the cells."""
     model = model or BaseCurrentModel()
     mask = np.full(data.n_numbers, True) if mask is None else mask
 

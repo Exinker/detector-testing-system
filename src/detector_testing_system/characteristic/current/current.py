@@ -47,7 +47,7 @@ class Current:
     ) -> None:
         view_left, view_right = views or [{}, {}]
 
-        fig, (ax_left, ax_right) = plt.subplots(nrows=1, ncols=2, figsize=(12, 4))
+        fig, (ax_left, ax_right) = plt.subplots(nrows=1, ncols=2, figsize=(12, 4), tight_layout=True)
 
         self._show_left(ax_left, view_left, verbose=verbose)
         self._show_right(ax_right, view_right, verbose=verbose, note=note)
@@ -185,7 +185,7 @@ class CurrentModelABC(ABC):
         u: Array[float],
         p: Array[float],
     ) -> Array[float]:
-        """Calculate a residual of approximation"""
+        """Calculate a residual of approximation."""
         u_hat = np.polyval(p, tau)
 
         # xi = 100*(u_hat - u) / u
@@ -247,7 +247,7 @@ class BaseCurrentModel(CurrentModelABC):
         tau: Array[float],
         u: Array[float],
     ) -> Array[float]:
-        """Optimize weighted approximation"""
+        """Optimize weighted approximation."""
 
         alpha = np.sum(u / tau)
         alpha2 = np.sum(u / tau**2)

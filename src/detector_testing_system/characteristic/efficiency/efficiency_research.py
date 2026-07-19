@@ -45,7 +45,7 @@ class EfficiencyResearch:
     ) -> None:
         view_left, view_right = views or [None, None]
 
-        fig, (ax_left, ax_right) = plt.subplots(nrows=1, ncols=2, figsize=(12, 4))
+        fig, (ax_left, ax_right) = plt.subplots(nrows=1, ncols=2, figsize=(12, 4), tight_layout=True)
 
         self._show_left(ax_left, view_left, verbose=verbose, note=note)
         self._show_right(ax_right, view_right, bins=bins, verbose=verbose)

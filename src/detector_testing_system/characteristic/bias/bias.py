@@ -29,7 +29,7 @@ class Bias:
         self,
         view: AxesView | None = None,
         color: str | None = None,
-        verbose: bool = False,
+        verbose: bool = True,
     ) -> None:
         view = view or {}
         color = color or 'red'
@@ -84,7 +84,7 @@ def calculate_bias(
     trace: Trace,
     filter: Callable[[Trace], Array[bool]] | None = None,
 ) -> Bias:
-    """Calculate a bias of the cell"""
+    """Calculate a bias of the cell."""
     filter = filter or filter_trace_factory()
 
     mask = filter(trace)

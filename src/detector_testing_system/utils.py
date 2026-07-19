@@ -8,7 +8,7 @@ def calculate_stats(
     __value: Array[float],
     confidence: float = .99
 ) -> tuple[float, float]:
-    """Calculate mean and confidence interval"""
+    """Calculate mean and confidence interval."""
     __value = __value[~np.isnan(__value)]
 
     n = len(__value)

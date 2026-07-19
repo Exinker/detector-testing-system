@@ -26,35 +26,26 @@ class Trace:
 
     def show(
         self,
-        view: AxesView | None,
-        verbose: bool = False,
+        verbose: bool = True,
+        view: AxesView | None = None,
+        bins: int = 40,
     ) -> None:
         view = view or {}
 
         fig, ax = plt.subplots(figsize=(6, 4), tight_layout=True)
 
+        plt.sca(ax)
         plt.scatter(
             self.tau, self.u,
             c='red', s=10,
             label=rf'$U_{{{self.n}}}$',
         )
-        if verbose:
-            plt.text(
-                0.05/2, 0.95,
-                '\n'.join([
-                ]),
-                transform=ax.transAxes,
-                ha='left', va='top',
-            )
-
         plt.xlabel(r'$\tau$ [{units}]'.format(units=r'$ms$'))
         plt.ylabel(r'$U$ [{units}]'.format(units=self.units.label))
-
         plt.grid(color='grey', linestyle=':')
-
         ax.set(**view)
 
-        plt.show()
+        plt.show()        
 
 
 def filter_trace_factory(

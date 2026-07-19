@@ -45,10 +45,10 @@ class NonlinearityResearch:
     ) -> None:
         view_left, view_right = views or [None, None]
 
-        fig, (ax_left, ax_right) = plt.subplots(nrows=1, ncols=2, figsize=(12, 4))
+        fig, (ax_left, ax_right) = plt.subplots(nrows=1, ncols=2, figsize=(12, 4), tight_layout=True)
 
         self._show_left(ax_left, view_left, verbose=verbose, note=note)
-        self._show_right(ax_right, view_right, bins=bins, verbose=verbose)
+        self._show_right(ax_right, view_right, bins=bins)
 
         plt.show()
 
@@ -100,11 +100,11 @@ class NonlinearityResearch:
         ax: Axes,
         view: AxesView | None,
         bins: int,
-        verbose: bool = True,
     ) -> None:
         view = view or {}
 
         plt.sca(ax)
+
         plt.hist(
             self.value[~np.isnan(self.value)],
             bins=bins,
@@ -164,7 +164,7 @@ def compare_nonlinearity(
     model = model or BaseCurrentModel()
     view_left, view_right = views or [None, None]
 
-    fig, (ax_left, ax_right) = plt.subplots(nrows=1, ncols=2, figsize=(12, 4))
+    fig, (ax_left, ax_right) = plt.subplots(nrows=1, ncols=2, figsize=(12, 4), tight_layout=True)
     for i, (trace, label) in enumerate(__traces):
         color = CMAP(i % 10)
 

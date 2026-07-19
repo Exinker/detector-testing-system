@@ -105,7 +105,7 @@ class Data:
         )
 
     def show(self, legend: bool = False, save: bool = False) -> None:
-        """Show data"""
+        """Show data."""
 
         fig, ax = plt.subplots(figsize=(6, 4), tight_layout=True)
 
@@ -135,7 +135,7 @@ class Data:
         plt.show()
 
     def save(self) -> None:
-        """Save data to `./data/<label>/data.pkl` file"""
+        """Save data to `./data/<label>/data.pkl` file."""
 
         filedir = ROOT / 'data' / self.label
         filedir.mkdir(parents=True, exist_ok=True)
@@ -162,7 +162,7 @@ class Data:
 
     @classmethod
     def load(cls, label: str) -> 'Data':
-        """Load data from filepath"""
+        """Load data from filepath."""
 
         filedir = ROOT / 'data' / label
         filepath = filedir / 'data.pkl'
@@ -206,7 +206,7 @@ def read_data(
     n_frames: int,
     verbose: bool = True,
 ) -> Data:
-    """Read data with a given sequence of `tau` and `n_frames`"""
+    """Read data with a given sequence of `tau` and `n_frames`."""
 
     data = []
     for exposure in tqdm(tau, disable=not verbose):

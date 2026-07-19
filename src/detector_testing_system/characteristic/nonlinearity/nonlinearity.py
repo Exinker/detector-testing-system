@@ -41,7 +41,7 @@ class Nonlinearity:
     ) -> None:
         view_left, view_right = views or [{}, {}]
 
-        fig, (ax_left, ax_right) = plt.subplots(nrows=1, ncols=2, figsize=(12, 4))
+        fig, (ax_left, ax_right) = plt.subplots(nrows=1, ncols=2, figsize=(12, 4), tight_layout=True)
 
         self._show_left(ax_left, view_left, verbose=verbose)
         self._show_right(ax_right, view_right, verbose=verbose, note=note)
@@ -205,7 +205,7 @@ def _calculate_nonlinearity_base(
 
 
 def _calculate_alpha(xi: Array[U]) -> float:
-    """Calculate nonlinearity coefficient (alpha)"""
+    """Calculate nonlinearity coefficient (alpha)."""
     return (np.max(xi) - np.min(xi)) / 2
 
 
@@ -230,7 +230,7 @@ def _calculate_nonlinearity_jnorm(
         span = x_intersection - trace.u[0]
 
     if verbose:
-        fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(12, 4))
+        fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(6, 4), tight_layout=True)
 
         plt.sca(ax)
         plt.scatter(

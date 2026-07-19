@@ -36,7 +36,7 @@ class Efficiency:
     ) -> None:
         view, *_ = views or [{}, ]
 
-        fig, ax = plt.subplots(figsize=(6, 4))
+        fig, ax = plt.subplots(figsize=(6, 4), tight_layout=True)
 
         self._show_left(ax, view, verbose=verbose, note=note)
 

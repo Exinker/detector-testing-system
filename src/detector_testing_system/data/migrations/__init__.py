@@ -16,7 +16,7 @@ MIGRATIONS: Mapping[int, tuple[int, Migration]] = {
 
 
 def migrate_data(label: str) -> Data:
-    """Migrate `./data/<label>/data.pkl` to the current data format version"""
+    """Migrate `./data/<label>/data.pkl` to the current data format version."""
 
     filedir = ROOT / 'data' / label
 

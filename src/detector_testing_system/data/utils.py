@@ -15,7 +15,7 @@ def load_data(
     label: str,
     show: bool = False,
 ) -> Data:
-    """Load data from `./data//<label>/data.pkl` file"""
+    """Load data from `./data//<label>/data.pkl` file."""
 
     try:
         data = migrate_data(
