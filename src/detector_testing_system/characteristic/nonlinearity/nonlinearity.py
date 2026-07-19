@@ -127,15 +127,15 @@ class Nonlinearity:
             c=color, s=10,
             label=r'$U$',
         )
+        plt.text(
+            0.95, 0.05/2,
+            '\n'.join([
+                r'$\xi = 100\frac{\hat{U} - U}{a \tau}$',
+            ]),
+            transform=ax.transAxes,
+            ha='right', va='bottom',
+        )
         if verbose:
-            plt.text(
-                0.95, 0.05/2,
-                '\n'.join([
-                    r'$\xi = 100\frac{\hat{U} - U}{a \tau}$',
-                ]),
-                transform=ax.transAxes,
-                ha='right', va='bottom',
-            )
             plt.text(
                 0.95, 0.95,
                 '\n'.join([
@@ -150,6 +150,17 @@ class Nonlinearity:
                 transform=ax.transAxes,
                 ha='right', va='top',
             )
+        else:
+            plt.text(
+                0.95, 0.95,
+                '\n'.join([
+                    trace.label.prefix,
+                    note,
+                ]),
+                transform=ax.transAxes,
+                ha='right', va='top',
+            )
+
 
         plt.xlabel(r'$U$ [{units}]'.format(units=trace.units.label))
         plt.ylabel(r'$\xi$ [%]')
