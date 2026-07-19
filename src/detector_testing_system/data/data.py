@@ -1,18 +1,10 @@
-import os
 import pickle
 from collections.abc import Sequence
 from typing import Any, Mapping
 
 import matplotlib.pyplot as plt
 import numpy as np
-from tqdm.notebook import tqdm
 
-from vmk_spectrum3_wrapper.device import Device
-from vmk_spectrum3_wrapper.measurement_manager.filters import (
-    ClipFilter,
-    PipeFilter,
-    ScaleFilter,
-)
 from vmk_spectrum3_wrapper.types import Array, MilliSecond, Number, U
 from vmk_spectrum3_wrapper.units import Units
 
@@ -90,10 +82,7 @@ class Data:
 
         return self.data[0].units
 
-    def trace(
-        self,
-        __n: Number,
-    ) -> Trace:
+    def trace(self, __n: Number) -> Trace:
 
         return Trace(
             u=self.u[:, __n],
@@ -114,7 +103,7 @@ class Data:
             label=[datum.label for datum in self.data],
         )
         plt.text(
-            0.975, 0.95,
+            0.975, 0.975,
             '\n'.join([
                 self.label.prefix,
             ]),
@@ -124,7 +113,7 @@ class Data:
         plt.xlabel(r'$number$')
         plt.ylabel(r'$U$ [{units}]'.format(units=self.units.label))
         plt.grid(color='grey', linestyle=':')
-        plt.legend().set_visible(legend)
+        plt.legend(loc='upper left').set_visible(legend)
 
         if save:
             filedir = ROOT / 'img' / self.label
@@ -198,31 +187,3 @@ class Data:
     def __str__(self) -> str:
         cls = self.__class__
         return f'{cls.__name__}({self.label})'
-
-
-def read_data(
-    device: Device,
-    tau: Sequence[MilliSecond],
-    n_frames: int,
-    verbose: bool = True,
-) -> Data:
-    """Read data with a given sequence of `tau` and `n_frames`."""
-
-    data = []
-    for exposure in tqdm(tau, disable=not verbose):
-        device.setup(
-            n_times=1,
-            exposure=float(exposure),
-            capacity=n_frames,
-            filter=PipeFilter(filters=[
-                ClipFilter(),
-                ScaleFilter(units=Units.percent),
-            ]),
-        )
-
-        datum = Datum.read(
-            device=device,
-        )
-        data.append(datum)
-
-    return Data.create(data)

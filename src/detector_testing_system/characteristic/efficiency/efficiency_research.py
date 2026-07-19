@@ -58,9 +58,6 @@ class EfficiencyResearch:
         view: AxesView | None,
         verbose: bool = True,
         note: str = '',
-        color: str | None = 'red',
-        label: str | None = r'$U$',
-        hat_label: str | None = r'$\hat{U}$',
     ) -> None:
         view = view or {}
 
@@ -73,17 +70,15 @@ class EfficiencyResearch:
 
         plt.scatter(
             number, self.value,
-            label=label,
-            c=color, s=2,
+            c='black', s=2,
         )
         plt.axhline(
             mean,
-            label=hat_label,
-            color='black', linestyle='-', linewidth=1,
+            color='red', linestyle='--', linewidth=1,
         )
         if verbose:
             plt.text(
-                0.05/2, 0.95,
+                0.025, 0.975,
                 '\n'.join([
                     self.data.label.prefix,
                     r'$k: {mean:.0f} \pm {ci:.0f} \text{{ [e}}^{{-}}\text{{/\%]}}$'.format(
@@ -119,6 +114,7 @@ class EfficiencyResearch:
 
         lb, ub = calculate_outlier_bounds(self.value, k=3)
         efficiency_trunked = trunk_outliers(self.value, (lb, ub))
+        mean, ci = calculate_stats(efficiency_trunked)
 
         plt.sca(ax)
 
@@ -126,6 +122,10 @@ class EfficiencyResearch:
             efficiency_trunked[~np.isnan(efficiency_trunked)],
             bins=bins,
             edgecolor='black', facecolor='white',
+        )
+        plt.axvline(
+            mean,
+            color='red', linestyle='--', linewidth=1,
         )
 
         plt.xlabel(r'k [$e^{-}/\%$]')

@@ -61,7 +61,7 @@ class Datum:
         plt.ylabel(r'$U$ [{units}]'.format(units=self.units.label))
 
         plt.grid(color='grey', linestyle=':')
-        plt.legend()
+        plt.legend(loc='upper left')
 
         plt.show()
 

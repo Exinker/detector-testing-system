@@ -30,35 +30,13 @@ class Efficiency:
 
     def show(
         self,
-        views: Sequence[AxesView | None] | None = None,
+        view: AxesView | None = None,
         verbose: bool = True,
         note: str = '',
     ) -> None:
-        view, *_ = views or [{}, ]
+        view = view or {}
 
         fig, ax = plt.subplots(figsize=(6, 4), tight_layout=True)
-
-        self._show_left(ax, view, verbose=verbose, note=note)
-
-        filedir = ROOT / 'img' / self.trace.label
-        filedir.mkdir(parents=True, exist_ok=True)
-        filename = 'efficiency ({n}).png'.format(
-            n=self.trace.n,
-        )
-        plt.savefig(filedir / filename)
-
-        plt.show()
-
-    def _show_left(
-        self,
-        ax: Axes,
-        view: AxesView | None,
-        verbose: bool = True,
-        note: str = '',
-        color: str | None = 'red',
-        label: str | None = r'$U$',
-        hat_label: str | None = r'$\hat{U}$',
-    ) -> None:
         trace = self.trace
         mask = self.mask
 
@@ -71,32 +49,24 @@ class Efficiency:
         )
         plt.scatter(
             trace.u[mask], trace.variance[mask],
-            c=color, s=10,
-            label=label,
+            c='red', s=10,
         )
         plt.plot(
             trace.u, variance_hat,
             color='black', linestyle='solid', linewidth=1,
-            label=hat_label,
         )
         if verbose:
             plt.text(
-                0.05/2, 0.95,
+                0.025, 0.975,
                 '\n'.join([
                     trace.label.prefix,
-                    r'n: {n}'.format(
-                        n=trace.n,
-                    ),
-                    r'$k$: {efficiency:.0f} [$e^-/\%$]'.format(
-                        efficiency=np.round(self.value, 0),
-                    ),
-                    # r'$c$: {efficiency:.0f} [$e^-$]'.format(
-                    #     efficiency=np.round(self.value, 0) * trace.units.value_max,
-                    # ),
+                    r'$k$: {:.0f} [$e^-/\%$]'.format(np.round(self.value, 0)),
+                    # r'$c$: {:.0f} [$e^-$]'.format(np.round(self.value, 0) * trace.units.value_max),
                     r'$U_{{b}}$: {bias:.4f} [{units}]'.format(
                         bias=self.bias.value,
                         units=trace.units.label,
                     ),
+                    r'n: {}'.format(trace.n),
                     note,
                 ]),
                 transform=ax.transAxes,
@@ -107,6 +77,15 @@ class Efficiency:
         plt.grid(color='grey', linestyle=':')
 
         ax.set(**view)
+
+        filedir = ROOT / 'img' / self.trace.label
+        filedir.mkdir(parents=True, exist_ok=True)
+        filename = 'efficiency ({n}).png'.format(
+            n=self.trace.n,
+        )
+        plt.savefig(filedir / filename)
+
+        plt.show()
 
 
 def calculate_efficiency(

@@ -65,7 +65,7 @@ class ReadNoiseResearch:
         )
         if verbose:
             plt.text(
-                0.05/2, 0.95,
+                0.025, 0.975,
                 '\n'.join([
                     self.data.label.prefix,
                     r'$\sigma$: {mean:.4f} $\pm$ {ci:.4f} [%]'.format(

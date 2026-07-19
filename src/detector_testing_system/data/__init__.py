@@ -1,8 +1,17 @@
-from .data import Data, read_data
+from .data import Data
 from .datum import Datum
 from .migrations import migrate_data
-from .trace import Trace, TraceFilter, filter_trace_factory
-from .utils import create_mask, load_data, split_data_by_detector
+from .trace import (
+    Trace,
+    TraceFilter,
+    filter_trace_factory,
+)
+from .utils import (
+    create_mask,
+    load_data,
+    read_data,
+    split_data_by_detector,
+)
 
 
 __all__ = [

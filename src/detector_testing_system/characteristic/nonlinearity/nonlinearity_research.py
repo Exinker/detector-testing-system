@@ -65,12 +65,16 @@ class NonlinearityResearch:
 
         plt.scatter(
             self.number, self.value,
-            c='red', s=10,
+            c='black', s=10,
             label=r'$U$',
+        )
+        plt.axhline(
+            np.nanmean(self.value),
+            color='red', linestyle='--', linewidth=1,
         )
         if verbose:
             plt.text(
-                0.05/2, 0.95,
+                0.025, 0.975,
                 '\n'.join([
                     self.data.label.prefix,
                     'method: {method}'.format(
@@ -111,12 +115,17 @@ class NonlinearityResearch:
             edgecolor='black', facecolor='white',
             # fill=False,
         )
+        plt.axvline(
+            np.nanmean(self.value),
+            color='red', linestyle='--', linewidth=1,
+        )
 
         plt.xlabel({
             'base': r'$\alpha$ [%]',
             'jnorm': r'$\Delta U$ [%]',
         }[getattr(self.model, 'name', 'base')])
         plt.ylabel(r'count')
+        plt.grid(color='grey', linestyle=':')
 
         ax.set(**view)
 

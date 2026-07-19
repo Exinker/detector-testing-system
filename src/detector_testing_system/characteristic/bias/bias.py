@@ -58,7 +58,7 @@ class Bias:
         )
         if verbose:
             plt.text(
-                0.95, 0.05/2,
+                0.975, 0.025,
                 '\n'.join([
                     r'$U_{{b}}$: {bias:.4f} [{units}]'.format(
                         bias=self.value,
@@ -73,7 +73,7 @@ class Bias:
         plt.ylabel(r'$U$ [{units}]'.format(units=self.trace.units.label))
 
         plt.grid(color='grey', linestyle=':')
-        plt.legend()
+        plt.legend(loc='upper left')
 
         ax.set(**view)
 

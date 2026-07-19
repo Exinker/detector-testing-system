@@ -87,10 +87,21 @@ class Nonlinearity:
         )
         if verbose:
             plt.text(
-                0.95, 0.05/2,
+                0.975, 0.975,
                 '\n'.join([
-                    fr'$a = {{{self.dark_current.value:.4f}}}$',
-                    fr'$b = {{{self.dark_current.bias:.4f}}}$',
+                    r'$i$: {value:.4f} [{units}]'.format(
+                        value=1e+3*self.dark_current.value,  # in %/s
+                        units=f'{self.trace.units.label}/s',
+                    ),
+                ]),
+                transform=ax.transAxes,
+                ha='right', va='top',
+            )
+            plt.text(
+                0.975, 0.025,
+                '\n'.join([
+                    r'$a = {{{:.4f}}}$'.format(self.dark_current.value),
+                    r'$b = {{{:.4f}}}$'.format(self.dark_current.bias),
                 ]),
                 transform=ax.transAxes,
                 ha='right', va='bottom',
@@ -100,7 +111,7 @@ class Nonlinearity:
         plt.ylabel(r'$U$ [{units}]'.format(units=trace.units.label))
 
         plt.grid(color='grey', linestyle=':')
-        plt.legend()
+        plt.legend(loc='upper left')
 
         ax.set(**view)
 
@@ -128,7 +139,7 @@ class Nonlinearity:
             label=r'$U$',
         )
         plt.text(
-            0.95, 0.05/2,
+            0.975, 0.025,
             '\n'.join([
                 r'$\xi = 100\frac{\hat{U} - U}{a \tau}$',
             ]),
@@ -137,7 +148,7 @@ class Nonlinearity:
         )
         if verbose:
             plt.text(
-                0.95, 0.95,
+                0.975, 0.975,
                 '\n'.join([
                     trace.label.prefix,
                     {
@@ -152,7 +163,7 @@ class Nonlinearity:
             )
         else:
             plt.text(
-                0.95, 0.95,
+                0.975, 0.975,
                 '\n'.join([
                     trace.label.prefix,
                     note,
@@ -161,10 +172,8 @@ class Nonlinearity:
                 ha='right', va='top',
             )
 
-
         plt.xlabel(r'$U$ [{units}]'.format(units=trace.units.label))
         plt.ylabel(r'$\xi$ [%]')
-
         plt.grid(color='grey', linestyle=':')
 
         ax.set(**view)
@@ -258,7 +267,7 @@ def _calculate_nonlinearity_jnorm(
             color='black', linestyle='solid', linewidth=1,
         )
         plt.text(
-            0.975, 0.95,
+            0.975, 0.975,
             '\n'.join([
                 trace.label.prefix,
                 r'$i$: {value:.4f} [{units}]'.format(

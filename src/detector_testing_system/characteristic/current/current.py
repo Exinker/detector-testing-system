@@ -88,12 +88,21 @@ class Current:
         )
         if verbose:
             plt.text(
-                0.95, 0.05/2,
+                0.975, 0.975,
                 '\n'.join([
                     r'$i$: {value:.4f} [{units}]'.format(
                         value=1e+3*self.value,  # in %/s
                         units=f'{self.trace.units.label}/s',
                     ),
+                ]),
+                transform=ax.transAxes,
+                ha='right', va='top',
+            )
+            plt.text(
+                0.975, 0.025,
+                '\n'.join([
+                    r'$a = {{{:.4f}}}$'.format(self.value),
+                    r'$b = {{{:.4f}}}$'.format(self.bias),
                 ]),
                 transform=ax.transAxes,
                 ha='right', va='bottom',
@@ -103,7 +112,7 @@ class Current:
         plt.ylabel(r'$U$ [{units}]'.format(units=self.trace.units.label))
 
         plt.grid(color='grey', linestyle=':')
-        plt.legend()
+        plt.legend(loc='upper left')
 
         ax.set(**view)
 
@@ -129,13 +138,9 @@ class Current:
         )
         if verbose:
             plt.text(
-                0.95, 0.95,
+                0.975, 0.975,
                 '\n'.join([
                     self.trace.label.prefix,
-                    {
-                        'base': fr'$\alpha: {{{np.nanmean(self.value):.2f}}}$ [%]',
-                        'jnorm': fr'$\Delta U: {{{np.nanmean(self.value):.2f}}}$ [%]',
-                    }[getattr(self.model, 'name', 'base')],
                     fr'$n: {{{self.trace.n}}}$',
                     note,
                 ]),
@@ -143,7 +148,7 @@ class Current:
                 ha='right', va='top',
             )
             plt.text(
-                0.95, 0.05/2,
+                0.975, 0.025,
                 '\n'.join([
                     r'$\xi = 100\frac{\hat{U} - U}{a \tau}$',
                 ]),
@@ -157,7 +162,7 @@ class Current:
         plt.grid(color='grey', linestyle=':')
 
         ax.set(**view)
- 
+
 
 class CurrentModelABC(ABC):
 

@@ -55,6 +55,7 @@ class CurrentResearch:
         self._show_right(
             ax_right,
             view_right,
+            confidence=confidence,
             bins=bins,
             color=color,
             verbose=verbose,
@@ -73,7 +74,7 @@ class CurrentResearch:
         self,
         ax: Axes,
         view: AxesView,
-        confidence: float = .95,
+        confidence: float,
         color: str | None = None,
         verbose: bool = True,
         note: str = '',
@@ -90,11 +91,15 @@ class CurrentResearch:
         plt.scatter(
             number, 1e+3*self.value,
             c='black', s=2,
-            label='$i_{{d}}$'
+            label='$i_{{d}}$',
+        )
+        plt.axhline(
+            mean,
+            color='red', linestyle='--', linewidth=1,
         )
         if verbose:
             plt.text(
-                0.05/2, 0.95,
+                0.025, 0.975,
                 '\n'.join([
                     self.data.label.prefix,
                     'method: {method}'.format(
@@ -128,6 +133,7 @@ class CurrentResearch:
         self,
         ax: Axes,
         view: AxesView,
+        confidence: float,
         bins: int,
         color: str | None = None,
         verbose: bool = True,
@@ -137,6 +143,7 @@ class CurrentResearch:
 
         lb, ub = calculate_outlier_bounds(self.value, k=3)
         dark_current_trunked = trunk_outliers(self.value, (lb, ub))
+        mean, ci = calculate_stats(dark_current_trunked, confidence=confidence)
 
         plt.sca(ax)
         plt.hist(
@@ -144,6 +151,10 @@ class CurrentResearch:
             bins=bins,
             edgecolor='black', facecolor='white',
             # fill=False,
+        )
+        plt.axvline(
+            1e+3*mean,
+            color='red', linestyle='--', linewidth=1,
         )
 
         plt.xlabel(r'$i_{{d}}$ [{units}]'.format(

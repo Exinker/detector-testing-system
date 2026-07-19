@@ -23,13 +23,14 @@ class Gradient:
     def show(
         self,
         views: Sequence[AxesView | None] | None = None,
+        note: str = '',
     ) -> None:
         view_left, view_right = views or [None, None]
 
         fig, (ax_left, ax_right) = plt.subplots(nrows=1, ncols=2, figsize=(12, 4), tight_layout=True)
 
         self._show_left(ax_left, view_left)
-        self._show_right(ax_right, view_right)
+        self._show_right(ax_right, view_right, note=note)
 
         filedir = ROOT / 'img' / self.trace.label
         filedir.mkdir(parents=True, exist_ok=True)
@@ -61,7 +62,7 @@ class Gradient:
         plt.ylabel(r'$U$ [{units}]'.format(units=self.trace.units.label))
         plt.grid(color='grey', linestyle=':')
 
-        plt.legend()
+        plt.legend(loc='upper left')
 
         ax.set(**view)
 
@@ -82,9 +83,11 @@ class Gradient:
         )
         if verbose:
             plt.text(
-                0.95, 0.95,
+                0.975, 0.975,
                 '\n'.join([
                     self.trace.label.prefix,
+                    r'n: {}'.format(self.trace.n),
+                    note,
                 ]),
                 transform=ax.transAxes,
                 ha='right', va='top',
@@ -98,9 +101,7 @@ class Gradient:
         ax.set(**view)
 
 
-def calculate_gradient(
-    trace: Trace,
-) -> Gradient:
+def calculate_gradient(trace: Trace) -> Gradient:
     """Calculate gradient."""
 
     value = np.gradient(trace.u, trace.tau)

@@ -58,7 +58,7 @@ def check_source(func: Callable) -> Callable:
             plt.xlabel(r'number')
             plt.ylabel(r'$U$')
             plt.grid(color='grey', linestyle=':')
-            plt.legend()
+            plt.legend(loc='upper left')
 
             plt.sca(ax_right)
             plt.plot(
@@ -71,7 +71,7 @@ def check_source(func: Callable) -> Callable:
                 color='red', linestyle='solid', linewidth=2,
             )
             plt.text(
-                0.05/2, 0.95,
+                0.025, 0.975,
                 '\n'.join([
                     '{started_at} / {finished_at}'.format(
                         started_at=datetime.strftime(datetime.fromtimestamp(before.started_at), '%Y-%m-%d %H:%M:%S'),

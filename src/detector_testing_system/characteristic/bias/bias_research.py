@@ -43,7 +43,7 @@ class BiasResearch:
         )
         if verbose:
             plt.text(
-                0.05/2, 0.95,
+                0.025, 0.975,
                 '\n'.join([
                     r'$U_{{b}}$: {mean:.4f} $\pm$ {ci:.4f}'.format(
                         mean=mean,
