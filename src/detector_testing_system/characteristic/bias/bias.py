@@ -29,7 +29,7 @@ class Bias:
         self,
         view: AxesView | None = None,
         color: str | None = None,
-        verbose: bool = False,
+        verbose: bool = True,
     ) -> None:
         view = view or {}
         color = color or 'red'
@@ -58,7 +58,7 @@ class Bias:
         )
         if verbose:
             plt.text(
-                0.95, 0.05/2,
+                0.975, 0.025,
                 '\n'.join([
                     r'$U_{{b}}$: {bias:.4f} [{units}]'.format(
                         bias=self.value,
@@ -73,7 +73,7 @@ class Bias:
         plt.ylabel(r'$U$ [{units}]'.format(units=self.trace.units.label))
 
         plt.grid(color='grey', linestyle=':')
-        plt.legend()
+        plt.legend(loc='upper left')
 
         ax.set(**view)
 
@@ -84,7 +84,7 @@ def calculate_bias(
     trace: Trace,
     filter: Callable[[Trace], Array[bool]] | None = None,
 ) -> Bias:
-    """Calculate a bias of the cell"""
+    """Calculate a bias of the cell."""
     filter = filter or filter_trace_factory()
 
     mask = filter(trace)

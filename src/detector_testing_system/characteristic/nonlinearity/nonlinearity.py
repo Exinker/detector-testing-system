@@ -1,5 +1,4 @@
 import logging
-from abc import ABC, abstractmethod
 from collections.abc import Sequence
 from dataclasses import dataclass
 
@@ -10,39 +9,42 @@ from matplotlib.axes import Axes
 from vmk_spectrum3_wrapper.types import Array, U
 
 from detector_testing_system import ROOT
-from detector_testing_system.characteristic.dark_current import (
-    BaseDarkCurrentModel,
-    DarkCurrentModelABC,
-    DarkCurrent,
-    JNormDarkCurrentModel,
+from detector_testing_system.characteristic.current import (
+    BaseCurrentModel,
+    CurrentModelABC,
+    Current,
+    JNormCurrentModel,
 )
-from detector_testing_system.characteristic.gradient import Gradient, calculate_gradient
+from detector_testing_system.characteristic.gradient import (
+    Gradient,
+    calculate_gradient,
+)
 from detector_testing_system.data import Trace
 from detector_testing_system.types import AxesView
-
 
 LOGGER = logging.getLogger(__name__)
 
 
 @dataclass
-class NonlinearityABC(ABC):
+class Nonlinearity:
 
     trace: Trace
-    model: DarkCurrentModelABC
-    dark_current: DarkCurrent
+    model: CurrentModelABC
+    dark_current: Current
     value: float
 
     def show(
         self,
         views: Sequence[AxesView | None] | None = None,
-        verbose: bool = False,
+        verbose: bool = True,
+        note: str = '',
     ) -> None:
         view_left, view_right = views or [{}, {}]
 
-        fig, (ax_left, ax_right) = plt.subplots(nrows=1, ncols=2, figsize=(12, 4))
+        fig, (ax_left, ax_right) = plt.subplots(nrows=1, ncols=2, figsize=(12, 4), tight_layout=True)
 
-        self._plot_left(ax_left, view_left, verbose=verbose)
-        self._plot_right(ax_right, view_right, verbose=verbose)
+        self._show_left(ax_left, view_left, verbose=verbose)
+        self._show_right(ax_right, view_right, verbose=verbose, note=note)
 
         filedir = ROOT / 'img' / self.trace.label
         filedir.mkdir(parents=True, exist_ok=True)
@@ -54,46 +56,19 @@ class NonlinearityABC(ABC):
 
         plt.show()
 
-    @abstractmethod
-    def _plot_left(
+    def _show_left(
         self,
         ax: Axes,
         view: AxesView | None,
-        color: str | None = None,
-        verbose: bool = False,
-        label: str | None = None,
-        hat_label: str | None = r'$\hat{U}$',
-    ) -> None:
-        pass
-
-    @abstractmethod
-    def _plot_right(
-        self,
-        ax: Axes,
-        view: AxesView | None,
-        color: str | None = None,
-        verbose: bool = False,
-    ) -> None:
-        pass
-
-
-class BaseNonlinearity(NonlinearityABC):
-
-    def _plot_left(
-        self,
-        ax: Axes,
-        view: AxesView | None,
-        color: str | None = None,
-        verbose: bool = False,
-        label: str | None = None,
+        verbose: bool = True,
+        color: str | None = 'red',
+        label: str | None = r'$U$',
         hat_label: str | None = r'$\hat{U}$',
     ) -> None:
         trace = self.dark_current.trace
         mask = self.dark_current.mask
 
         view = view or {}
-        color = color or 'red'
-        label = label or rf'$U_{{{trace.n}}}$'
 
         plt.sca(ax)
         plt.scatter(
@@ -112,10 +87,21 @@ class BaseNonlinearity(NonlinearityABC):
         )
         if verbose:
             plt.text(
-                0.95, 0.05/2,
+                0.975, 0.975,
                 '\n'.join([
-                    fr'$a = {{{self.dark_current.value:.4f}}}$',
-                    fr'$b = {{{self.dark_current.bias:.4f}}}$',
+                    r'$i$: {value:.4f} [{units}]'.format(
+                        value=1e+3*self.dark_current.value,  # in %/s
+                        units=f'{self.trace.units.label}/s',
+                    ),
+                ]),
+                transform=ax.transAxes,
+                ha='right', va='top',
+            )
+            plt.text(
+                0.975, 0.025,
+                '\n'.join([
+                    r'$a = {{{:.4f}}}$'.format(self.dark_current.value),
+                    r'$b = {{{:.4f}}}$'.format(self.dark_current.bias),
                 ]),
                 transform=ax.transAxes,
                 ha='right', va='bottom',
@@ -123,20 +109,21 @@ class BaseNonlinearity(NonlinearityABC):
 
         plt.xlabel(r'$\tau$ [ms]')
         plt.ylabel(r'$U$ [{units}]'.format(units=trace.units.label))
+
         plt.grid(color='grey', linestyle=':')
-        plt.legend()
+        plt.legend(loc='upper left')
 
         ax.set(**view)
 
-    def _plot_right(
+    def _show_right(
         self,
         ax: Axes,
         view: AxesView | None,
-        color: str | None = None,
-        verbose: bool = False,
+        verbose: bool = True,
+        color: str | None = 'red',
+        note: str = '',
     ) -> None:
         view = view or {}
-        color = color or 'red'
 
         trace = self.dark_current.trace
         mask = self.dark_current.mask
@@ -149,147 +136,44 @@ class BaseNonlinearity(NonlinearityABC):
         plt.scatter(
             trace.u[mask], self.dark_current.xi[mask],
             c=color, s=10,
-            label=rf'$U_{{{trace.n}}}$',
+            label=r'$U$',
+        )
+        plt.text(
+            0.975, 0.025,
+            '\n'.join([
+                r'$\xi = 100\frac{\hat{U} - U}{a \tau}$',
+            ]),
+            transform=ax.transAxes,
+            ha='right', va='bottom',
         )
         if verbose:
             plt.text(
-                0.95, 0.95,
+                0.975, 0.975,
                 '\n'.join([
                     trace.label.prefix,
-                    fr'$\alpha: {{{self.value:.2f}}}$ [%]',
+                    {
+                        'base': fr'$\alpha: {{{np.nanmean(self.value):.2f}}}$ [%]',
+                        'jnorm': fr'$\Delta U: {{{np.nanmean(self.value):.2f}}}$ [%]',
+                    }[getattr(self.model, 'name', 'base')],
+                    fr'$n: {{{self.trace.n}}}$',
+                    note,
                 ]),
                 transform=ax.transAxes,
                 ha='right', va='top',
             )
+        else:
             plt.text(
-                0.95, 0.05/2,
-                '\n'.join([
-                    r'$error = 100\frac{\hat{U} - U_{i}}{a \tau}$',
-                ]),
-                transform=ax.transAxes,
-                ha='right', va='bottom',
-            )
-
-        plt.xlabel(r'$U$ [{units}]'.format(units=trace.units.label))
-        plt.ylabel(r'$error$ [%]')
-
-        plt.grid(color='grey', linestyle=':')
-
-        ax.set(**view)
-
-
-@dataclass
-class JNormNonlinearity(NonlinearityABC):
-
-    trace: Trace
-    model: DarkCurrentModelABC
-    dark_current: DarkCurrent
-    value: float
-    k: float
-
-    def _plot_left(
-        self,
-        ax: Axes,
-        view: AxesView | None,
-        color: str | None = None,
-        verbose: bool = False,
-        label: str | None = None,
-        hat_label: str | None = r'$\hat{U}$',
-    ) -> None:
-        trace = self.dark_current.trace
-        mask = self.dark_current.mask
-
-        view = view or {}
-        color = color or 'red'
-        label = label or rf'$U_{{{trace.n}}}$'
-
-        plt.sca(ax)
-        plt.scatter(
-            trace.tau, trace.u,
-            c='grey', s=10,
-        )
-        plt.scatter(
-            trace.tau[mask], trace.u[mask],
-            c=color, s=10,
-            label=label,
-        )
-        plt.plot(
-            trace.tau, self.dark_current.interpolate(trace.tau),
-            color='black', linestyle='solid', linewidth=1,
-            label=hat_label,
-        )
-        if verbose:
-            plt.text(
-                0.95, 0.05/2,
-                '\n'.join([
-                    fr'$a = {{{self.dark_current.value:.4f}}}$',
-                    fr'$b = {{{self.dark_current.bias:.4f}}}$',
-                ]),
-                transform=ax.transAxes,
-                ha='right', va='bottom',
-            )
-
-        plt.xlabel(r'$\tau$ [ms]')
-        plt.ylabel(r'$U$ [{units}]'.format(units=trace.units.label))
-
-        plt.grid(color='grey', linestyle=':')
-        plt.legend()
-
-        ax.set(**view)
-
-    def _plot_right(
-        self,
-        ax: Axes,
-        view: AxesView | None,
-        color: str | None = None,
-        verbose: bool = False,
-    ) -> None:
-        view = view or {}
-        color = color or 'red'
-
-        trace = self.dark_current.trace
-        gradient = calculate_gradient(trace=trace)
-        mask = self.dark_current.mask
-
-        plt.sca(ax)
-        plt.scatter(
-            trace.u, gradient.value,
-            c='grey', s=10,
-        )
-        plt.scatter(
-            trace.u[mask], gradient.value[mask],
-            c=color, s=10,
-            label=rf'$U_{{{trace.n}}}$',
-        )
-        plt.axhline(
-            self.dark_current.value,
-            color='black', linestyle='solid', linewidth=1,
-        )
-        if verbose and self.value > 0:
-            plt.axhline(
-                self.k * self.dark_current.value,
-                color='red', linestyle='--', linewidth=1,
-            )
-            plt.axvspan(
-                trace.u[0],
-                trace.u[0] + self.value,
-                color='grey',
-                alpha=.125,
-            )
-        if verbose:
-            plt.text(
-                0.95, 0.95,
+                0.975, 0.975,
                 '\n'.join([
                     trace.label.prefix,
-                    fr'$\Delta U$: {self.value:.2f} [%]',
+                    note,
                 ]),
                 transform=ax.transAxes,
                 ha='right', va='top',
             )
 
         plt.xlabel(r'$U$ [{units}]'.format(units=trace.units.label))
-        plt.ylabel(r'$dU / d\tau$')
-
+        plt.ylabel(r'$\xi$ [%]')
         plt.grid(color='grey', linestyle=':')
 
         ax.set(**view)
@@ -297,32 +181,34 @@ class JNormNonlinearity(NonlinearityABC):
 
 def calculate_nonlinearity(
     trace: Trace,
-    model: DarkCurrentModelABC | None = None,
+    model: CurrentModelABC | None = None,
+    verbose: bool = True,
     **kwargs,
-) -> NonlinearityABC:
-    model = model or BaseDarkCurrentModel()
+) -> Nonlinearity:
+    model = model or BaseCurrentModel()
 
-    if isinstance(model, BaseDarkCurrentModel):
+    if isinstance(model, BaseCurrentModel):
         return _calculate_nonlinearity_base(
             trace=trace,
             model=model,
             **kwargs,
         )
 
-    if isinstance(model, JNormDarkCurrentModel):
+    if isinstance(model, JNormCurrentModel):
         return _calculate_nonlinearity_jnorm(
             trace=trace,
             model=model,
+            verbose=verbose,
             **kwargs,
         )
 
-    raise TypeError('`BaseDarkCurrentModel` and `JNormDarkCurrentModel` are supported only!')
+    raise TypeError('`BaseCurrentModel` and `JNormCurrentModel` are supported only!')
 
 
 def _calculate_nonlinearity_base(
     trace: Trace,
-    model: BaseDarkCurrentModel,
-) -> BaseNonlinearity:
+    model: BaseCurrentModel,
+) -> Nonlinearity:
 
     if not model.weighted:
         raise ValueError('To calculate nonlinearity use weighted model only!')
@@ -330,7 +216,7 @@ def _calculate_nonlinearity_base(
     dark_current = model.fit(trace)
     alpha = _calculate_alpha(xi=dark_current.xi)
 
-    return BaseNonlinearity(
+    return Nonlinearity(
         trace=trace,
         model=model,
         dark_current=dark_current,
@@ -339,15 +225,16 @@ def _calculate_nonlinearity_base(
 
 
 def _calculate_alpha(xi: Array[U]) -> float:
-    """Calculate nonlinearity coefficient (alpha)"""
+    """Calculate nonlinearity coefficient (alpha)."""
     return (np.max(xi) - np.min(xi)) / 2
 
 
 def _calculate_nonlinearity_jnorm(
     trace: Trace,
-    model: JNormDarkCurrentModel,
+    model: JNormCurrentModel,
     k: float = 2,
-) -> JNormNonlinearity:
+    verbose: bool = True,
+) -> Nonlinearity:
 
     gradient = calculate_gradient(trace=trace)
     dark_current = model.fit(trace=trace)
@@ -362,12 +249,61 @@ def _calculate_nonlinearity_jnorm(
     else:
         span = x_intersection - trace.u[0]
 
-    return JNormNonlinearity(
+    if verbose:
+        fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(6, 4), tight_layout=True)
+
+        plt.sca(ax)
+        plt.scatter(
+            trace.u, 1e+3*gradient.value,
+            c='grey', s=10,
+        )
+        plt.scatter(
+            trace.u[dark_current.mask], 1e+3*gradient.value[dark_current.mask],
+            c='red', s=10,
+            label=r'$U$',
+        )
+        plt.axhline(
+            1e+3*dark_current.value,
+            color='black', linestyle='solid', linewidth=1,
+        )
+        plt.text(
+            0.975, 0.975,
+            '\n'.join([
+                trace.label.prefix,
+                r'$i$: {value:.4f} [{units}]'.format(
+                    value=1e+3*np.nanmean(gradient.value[dark_current.mask]),  # in %/s
+                    units=f'{trace.units.label}/s',
+                ),
+                fr'$\Delta U: {{{span:.2f}}}$ [%]',
+                fr'$n: {{{trace.n}}}$',
+            ]),
+            transform=ax.transAxes,
+            ha='right', va='top',
+        )
+        if span > 0:
+            plt.axhline(
+                k * 1e+3*dark_current.value,
+                color='red', linestyle='--', linewidth=1,
+            )
+            plt.axvspan(
+                trace.u[0],
+                trace.u[0] + span,
+                color='grey',
+                alpha=.125,
+            )
+
+        plt.xlabel(r'$U$ [{units}]'.format(units=trace.units.label))
+        plt.ylabel(r'$dU / d\tau$ [%/s]')
+
+        plt.grid(color='grey', linestyle=':')
+        plt.show()
+
+
+    return Nonlinearity(
         trace=trace,
         model=model,
         dark_current=dark_current,
         value=span,
-        k=k,
     )
 
 

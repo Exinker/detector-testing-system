@@ -1,6 +1,6 @@
 from .nonlinearity import (
-    BaseDarkCurrentModel,
-    JNormDarkCurrentModel,
+    BaseCurrentModel,
+    JNormCurrentModel,
     calculate_nonlinearity,
 )
 from .nonlinearity_research import (
@@ -9,8 +9,8 @@ from .nonlinearity_research import (
 )
 
 __all__ = [
-    'BaseDarkCurrentModel',
-    'JNormDarkCurrentModel',
+    'BaseCurrentModel',
+    'JNormCurrentModel',
     'calculate_nonlinearity',
     'compare_nonlinearity',
     'research_nonlinearity',

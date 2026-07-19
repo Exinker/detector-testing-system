@@ -17,7 +17,7 @@ from detector_testing_system.experiment.config import ExperimentConfig
 
 
 def check_source(func: Callable) -> Callable:
-    """Check a stability of the light source"""
+    """Check a stability of the light source."""
 
     @wraps(func)
     def wrapper(device: Device, config: ExperimentConfig, *args, **kwargs):
@@ -58,7 +58,7 @@ def check_source(func: Callable) -> Callable:
             plt.xlabel(r'number')
             plt.ylabel(r'$U$')
             plt.grid(color='grey', linestyle=':')
-            plt.legend()
+            plt.legend(loc='upper left')
 
             plt.sca(ax_right)
             plt.plot(
@@ -71,7 +71,7 @@ def check_source(func: Callable) -> Callable:
                 color='red', linestyle='solid', linewidth=2,
             )
             plt.text(
-                0.05/2, 0.95,
+                0.025, 0.975,
                 '\n'.join([
                     '{started_at} / {finished_at}'.format(
                         started_at=datetime.strftime(datetime.fromtimestamp(before.started_at), '%Y-%m-%d %H:%M:%S'),
@@ -100,7 +100,7 @@ def check_source(func: Callable) -> Callable:
 
 
 def check_total(func: Callable) -> Callable:
-    """Check an estimation of experiment's total time"""
+    """Check an estimation of experiment's total time."""
 
     @wraps(func)
     def wrapper(device: Device, config: ExperimentConfig, params: Sequence[tuple[int, Array[MilliSecond]]], *args, **kwargs):
@@ -130,7 +130,7 @@ def check_total(func: Callable) -> Callable:
 
 
 def check_exposure(func: Callable) -> Callable:
-    """Check an tau (exposure time)"""
+    """Check an tau (exposure time)."""
 
     @wraps(func)
     def wrapper(device: Device, config: ExperimentConfig, params: Sequence[tuple[int, Array[MilliSecond]]], *args, **kwargs):
@@ -156,7 +156,7 @@ def run_experiment(
     label: str | None = None,
     force: bool = False,
 ) -> None:
-    """Run experiment with given params"""
+    """Run experiment with given params."""
 
     if label is None:
         label = datetime.strftime(datetime.now(), '%Y%m%d-%H%M%S')

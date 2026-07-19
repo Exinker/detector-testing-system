@@ -43,7 +43,7 @@ class BiasResearch:
         )
         if verbose:
             plt.text(
-                0.05/2, 0.95,
+                0.025, 0.975,
                 '\n'.join([
                     r'$U_{{b}}$: {mean:.4f} $\pm$ {ci:.4f}'.format(
                         mean=mean,
@@ -56,7 +56,6 @@ class BiasResearch:
 
         plt.xlabel(r'$number$')
         plt.ylabel(r'$U_{{b}}$ [{units}]'.format(units=self.data.units.label))
-
         plt.grid(color='grey', linestyle=':')
 
         ax.set(**view)
@@ -68,7 +67,7 @@ def research_bias(
     data: Data,
     filter: Callable[[Trace], Array[bool]] | None = None,
 ) -> BiasResearch:
-    """Calculate a bias of the cells"""
+    """Calculate a bias of the cells."""
 
     value = np.zeros(data.n_numbers)
     for n in range(data.n_numbers):

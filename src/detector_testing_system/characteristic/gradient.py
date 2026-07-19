@@ -11,6 +11,8 @@ from detector_testing_system import ROOT
 from detector_testing_system.data import Trace
 from detector_testing_system.types import AxesView
 
+CMAP = plt.get_cmap('tab10')
+
 
 @dataclass
 class Gradient:
@@ -21,15 +23,14 @@ class Gradient:
     def show(
         self,
         views: Sequence[AxesView | None] | None = None,
-        verbose: bool = False,
+        note: str = '',
     ) -> None:
         view_left, view_right = views or [None, None]
 
+        fig, (ax_left, ax_right) = plt.subplots(nrows=1, ncols=2, figsize=(12, 4), tight_layout=True)
 
-        fig, (ax_left, ax_right) = plt.subplots(nrows=1, ncols=2, figsize=(12, 4))
-
-        self._plot_left(ax_left, view_left, verbose=verbose)
-        self._plot_right(ax_right, view_right, verbose=verbose)
+        self._show_left(ax_left, view_left)
+        self._show_right(ax_right, view_right, note=note)
 
         filedir = ROOT / 'img' / self.trace.label
         filedir.mkdir(parents=True, exist_ok=True)
@@ -40,82 +41,68 @@ class Gradient:
 
         plt.show()
 
-    def _plot_left(
+    def _show_left(
         self,
         ax: Axes,
         view: AxesView | None,
-        verbose: bool = False,
+        verbose: bool = True,
+        color: str | None = 'red',
+        label: str | None = r'$U$',
     ) -> None:
         view = view or {}
-
-        p = np.polyfit(self.trace.tau, self.trace.u, deg=1)
 
         plt.sca(ax)
         plt.scatter(
             self.trace.tau, self.trace.u,
-            c='red', s=10,
-            label=rf'$U_{{{self.trace.n}}}$',
+            c=color, s=10,
+            label=label,
         )
-        plt.plot(
-            self.trace.tau, np.polyval(p, self.trace.tau),
-            color='black', linestyle='solid', linewidth=1,
-            label=r'$\hat{U}$',
-        )
-        if verbose:
-            ax.text(
-                0.95, 0.05/2,
-                '\n'.join([
-                    fr'$a = {{{p[0]:.4f}}}$',
-                    fr'$b = {{{p[1]:.4f}}}$',
-                ]),
-                transform=ax.transAxes,
-                ha='right', va='bottom',
-            )
 
         plt.xlabel(r'$\tau$ [ms]')
         plt.ylabel(r'$U$ [{units}]'.format(units=self.trace.units.label))
-
         plt.grid(color='grey', linestyle=':')
-        plt.legend()
+
+        plt.legend(loc='upper left')
 
         ax.set(**view)
 
-    def _plot_right(
+    def _show_right(
         self,
         ax: Axes,
         view: AxesView | None,
-        verbose: bool = False,
+        verbose: bool = True,
+        color: str | None = 'red',
+        note: str = '',
     ) -> None:
         view = view or {}
 
         plt.sca(ax)
         plt.scatter(
-            self.trace.u, self.value,
-            c='red', s=10,
+            self.trace.u, 1e+3*self.value,
+            c=color, s=10,
         )
-
         if verbose:
             plt.text(
-                0.95, 0.95,
+                0.975, 0.975,
                 '\n'.join([
                     self.trace.label.prefix,
+                    r'n: {}'.format(self.trace.n),
+                    note,
                 ]),
                 transform=ax.transAxes,
                 ha='right', va='top',
             )
 
         plt.xlabel(r'$U$ [{units}]'.format(units=self.trace.units.label))
-        plt.ylabel(r'$dU / d\tau$')
+        plt.ylabel(r'$dU / d\tau$ [%/s]')
 
         plt.grid(color='grey', linestyle=':')
 
         ax.set(**view)
 
 
-def calculate_gradient(
-    trace: Trace,
-) -> Gradient:
-    """Calculate gradient"""
+def calculate_gradient(trace: Trace) -> Gradient:
+    """Calculate gradient."""
 
     value = np.gradient(trace.u, trace.tau)
 
@@ -123,3 +110,38 @@ def calculate_gradient(
         trace=trace,
         value=value,
     )
+
+
+def compare_gradient(
+    __traces: Sequence[tuple[Trace, str]],
+    views: Sequence[AxesView | None] | None = None,
+) -> None:
+    view_left, view_right = views or [None, None]
+
+    fig, (ax_left, ax_right) = plt.subplots(nrows=1, ncols=2, figsize=(12, 4), tight_layout=True)
+    for i, (trace, label) in enumerate(__traces):
+        color = CMAP(i % 10)
+
+        gradient = calculate_gradient(trace=trace)
+        gradient._show_left(
+            ax_left,
+            view_left,
+            color=color,
+            verbose=False,
+            label=label,
+        )
+        gradient._show_right(
+            ax_right,
+            view_right,
+            color=color,
+            verbose=False,
+        )
+
+    filedir = ROOT / 'img'
+    filedir.mkdir(parents=True, exist_ok=True)
+    filepath = filedir / 'gradient {n}.png'.format(
+        n='x'.join([str(trace.n) for trace, _ in __traces]),
+    )
+    plt.savefig(filepath)
+
+    plt.show()

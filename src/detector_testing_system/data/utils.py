@@ -1,21 +1,57 @@
 from collections.abc import Sequence
 
 import numpy as np
+from tqdm.notebook import tqdm
 
 from vmk_spectrum3_wrapper.config import DEFAULT_DETECTOR
 from vmk_spectrum3_wrapper.detector import Detector
-from vmk_spectrum3_wrapper.types import Array
+from vmk_spectrum3_wrapper.device import Device
+from vmk_spectrum3_wrapper.measurement_manager.filters import (
+    ClipFilter,
+    PipeFilter,
+    ScaleFilter,
+)
+from vmk_spectrum3_wrapper.types import Array, MilliSecond
+from vmk_spectrum3_wrapper.units import Units
 
 from detector_testing_system.data.data import Data
 from detector_testing_system.data.datum import Datum
 from detector_testing_system.data.migrations import migrate_data
 
 
+def read_data(
+    device: Device,
+    tau: Sequence[MilliSecond],
+    n_frames: int,
+    verbose: bool = True,
+) -> Data:
+    """Read data with a given sequence of `tau` and `n_frames`."""
+
+    data = []
+    for exposure in tqdm(tau, disable=not verbose):
+        device.setup(
+            n_times=1,
+            exposure=float(exposure),
+            capacity=n_frames,
+            filter=PipeFilter(filters=[
+                ClipFilter(),
+                ScaleFilter(units=Units.percent),
+            ]),
+        )
+
+        datum = Datum.read(
+            device=device,
+        )
+        data.append(datum)
+
+    return Data.create(data)
+
+
 def load_data(
     label: str,
     show: bool = False,
 ) -> Data:
-    """Load data from `./data//<label>/data.pkl` file"""
+    """Load data from `./data//<label>/data.pkl` file."""
 
     try:
         data = migrate_data(
