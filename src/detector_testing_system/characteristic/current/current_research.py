@@ -83,8 +83,9 @@ class CurrentResearch:
         color = color or 'red'
 
         number = np.arange(self.data.n_numbers)
-        lb, ub = calculate_outlier_bounds(1e+3*self.value, k=3)
-        dark_current_trunked = trunk_outliers(1e+3*self.value, (lb, ub))
+        # lb, ub = calculate_outlier_bounds(1e+3*self.value, k=3)
+        # dark_current_trunked = trunk_outliers(1e+3*self.value, (lb, ub))
+        dark_current_trunked = 1e+3*self.value
         mean, ci = calculate_stats(dark_current_trunked, confidence=confidence)
 
         plt.sca(ax)
@@ -115,7 +116,8 @@ class CurrentResearch:
                 ha='left', va='top',
             )
 
-        ylim_max = min(1.5 * np.nanmax(1e+3*self.value), 5*ub)
+        # ylim_max = min(1.5 * np.nanmax(1e+3*self.value), 5*ub)
+        ylim_max = 1.5 * np.nanmax(1e+3*self.value)
         ylim_min = np.nanmin(1e+3*self.value) - .025*(ylim_max - np.nanmin(1e+3*self.value))
         plt.ylim([
             ylim_min,
@@ -141,8 +143,9 @@ class CurrentResearch:
         view = view or {}
         color = color or 'red'
 
-        lb, ub = calculate_outlier_bounds(self.value, k=3)
-        dark_current_trunked = trunk_outliers(self.value, (lb, ub))
+        # lb, ub = calculate_outlier_bounds(self.value, k=3)
+        # dark_current_trunked = trunk_outliers(self.value, (lb, ub))
+        dark_current_trunked = self.value
         mean, ci = calculate_stats(dark_current_trunked, confidence=confidence)
 
         plt.sca(ax)
