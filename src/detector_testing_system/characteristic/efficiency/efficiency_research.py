@@ -7,11 +7,9 @@ import matplotlib.pyplot as plt
 import numpy as np
 from distfit import distfit
 from matplotlib.axes import Axes
-from tqdm.notebook import tqdm
 
 from vmk_spectrum3_wrapper.types import Array
 
-from detector_testing_system import ROOT
 from detector_testing_system.characteristic.efficiency import calculate_efficiency
 from detector_testing_system.data import (
     Data,
@@ -183,10 +181,14 @@ def research_efficiency(
             #     n,
             #     error,
             # )
-            value[n] = float(np.nan)
+            pass
 
         except Exception as error:
-            print(error)
+            LOGGER.error(
+                'Calculate nonlinearity (n: %d): %s',
+                n,
+                error,
+            )
 
     return EfficiencyResearch(
         data=data,

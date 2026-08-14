@@ -120,10 +120,16 @@ class ReadNoiseResearch:
         ax.set(**view)
 
 
-def research_read_noise(data: Data) -> ReadNoiseResearch:
-    """Calculate a read noise of the cells."""
+def research_read_noise(
+    data: Data,
+    mask: Array[bool] | None = None,
+    ) -> ReadNoiseResearch:
+    mask = np.full(data.n_numbers, True) if mask is None else mask
 
-    value = np.mean(np.sqrt(data.variance), axis=0)
+    read_noise = np.mean(np.sqrt(data.variance), axis=0)
+
+    value = np.full(data.n_numbers, np.nan)
+    value[mask] = read_noise[mask]
 
     return ReadNoiseResearch(
         data=data,
